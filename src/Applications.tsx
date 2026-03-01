@@ -16,6 +16,10 @@ import {
   Toolbar,
   AutocompleteInput,
   useDataProvider,
+  TopToolbar,
+  ExportButton,
+  CreateButton,
+  useListContext,
 } from "react-admin";
 import {
   Avatar,
@@ -28,9 +32,16 @@ import {
   Chip,
   TextField as MuiTextField,
   Button,
+  Grid,
+  Card,
+  CardContent,
+  CardActionArea,
+  Tooltip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import GridViewIcon from "@mui/icons-material/GridView";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -228,17 +239,151 @@ const KeycloakFields = () => {
   );
 };
 
-export const ApplicationList = () => (
-  <List>
-    <Datagrid rowClick="edit">
-      <AvatarField source="iconUrl" />
-      <TextField source="name" />
-      <UrlField source="url" />
-      <TextField source="clientId" />
-      <TextField source="realm" />
-    </Datagrid>
-  </List>
+const ListActions = ({ viewMode, onToggle }: any) => (
+  <TopToolbar>
+    <Tooltip title={viewMode === "list" ? "Switch to Grid View" : "Switch to List View"}>
+      <IconButton onClick={onToggle}>
+        {viewMode === "list" ? <GridViewIcon /> : <ViewListIcon />}
+      </IconButton>
+    </Tooltip>
+    <CreateButton />
+    <ExportButton />
+  </TopToolbar>
 );
+
+const ApplicationGrid = () => {
+  const { data, isLoading } = useListContext();
+  const navigate = useNavigate();
+
+  if (isLoading) return null;
+
+  return (
+    <Grid container spacing={2} sx={{ mt: 1, p: 1 }}>
+      {data.map((record) => (
+        <Grid item key={record.id} xs={12} sm={6} md={4} lg={3}>
+          <Card
+            variant="outlined"
+            sx={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              transition: "all 0.2s ease-in-out",
+              borderRadius: 2,
+              "&:hover": {
+                borderColor: "primary.main",
+                boxShadow: "0 4px 20px 0 rgba(0,0,0,0.05)",
+                transform: "translateY(-2px)",
+              },
+            }}
+          >
+            <CardActionArea
+              onClick={() => navigate(`/applications/${record.id}`)}
+              sx={{
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                p: 2,
+                textAlign: "center",
+              }}
+            >
+              <Box sx={{ position: "relative" }}>
+                <Avatar
+                  src={record.iconUrl}
+                  alt={record.name}
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    mb: 1,
+                    bgcolor: "grey.100",
+                    color: "text.primary",
+                    fontSize: "1.5rem",
+                    fontWeight: "bold",
+                    border: "1px solid",
+                    borderColor: "divider",
+                  }}
+                >
+                  {record.name?.[0]}
+                </Avatar>
+                {(record.realm || record.clientId) && (
+                  <Tooltip title="Linked to Keycloak">
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 8,
+                        right: -4,
+                        bgcolor: "primary.main",
+                        color: "white",
+                        borderRadius: "50%",
+                        width: 20,
+                        height: 20,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "2px solid white",
+                        boxShadow: 1,
+                      }}
+                    >
+                      <Typography variant="caption" sx={{ fontWeight: "bold", fontSize: 10 }}>
+                        K
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                )}
+              </Box>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 600, lineHeight: 1.2, mt: 1 }}
+                noWrap
+              >
+                {record.name}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: 0.5 }}
+                noWrap
+              >
+                {record.url ? new URL(record.url).hostname : ""}
+              </Typography>
+            </CardActionArea>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+};
+
+export const ApplicationList = () => {
+  const [viewMode, setViewMode] = useState(
+    localStorage.getItem("applicationViewMode") || "list"
+  );
+
+  const handleToggle = () => {
+    const newMode = viewMode === "list" ? "grid" : "list";
+    setViewMode(newMode);
+    localStorage.setItem("applicationViewMode", newMode);
+  };
+
+  return (
+    <List
+      actions={<ListActions viewMode={viewMode} onToggle={handleToggle} />}
+      sx={{ mt: 2 }}
+    >
+      {viewMode === "list" ? (
+        <Datagrid rowClick="edit">
+          <AvatarField source="iconUrl" />
+          <TextField source="name" />
+          <UrlField source="url" />
+          <TextField source="clientId" />
+          <TextField source="realm" />
+        </Datagrid>
+      ) : (
+        <ApplicationGrid />
+      )}
+    </List>
+  );
+};
 
 const MyToolbar = ({ onCancel }: { onCancel: () => void }) => (
   <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>

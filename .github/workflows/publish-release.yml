@@ -1,0 +1,112 @@
+name: Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name (e.g. v1.2.3)'
+        required: true
+      sha:
+        description: 'Git commit SHA to build'
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  publish:
+    name: 🚀 Build and Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production application
+        run: npm run build
+
+      - name: Prepare build information
+        id: build_info
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          ARTIFACT_NAME="porturl-web-v${VERSION}.zip"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+
+      - name: Archive production build
+        run: |
+          cd dist
+          zip -r ../${{ steps.build_info.outputs.artifact-name }} .
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: ${{ steps.build_info.outputs.artifact-name }}
+          retention-days: 7
+
+      - name: Set up QEMU & Docker Buildx
+        uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Prepare Docker tags
+        id: docker_tags
+        run: |
+          IMAGE_NAME="friesoft/porturl-web"
+          VERSION="${{ steps.build_info.outputs.version }}"
+          TAGS="$IMAGE_NAME:$VERSION,$IMAGE_NAME:latest"
+          
+          # Add major.minor tag
+          MAJOR_MINOR=$(echo "$VERSION" | cut -d. -f1,2)
+          TAGS="$TAGS,$IMAGE_NAME:$MAJOR_MINOR"
+
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.docker_tags.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.title=porturl-web
+            org.opencontainers.image.version=${{ steps.build_info.outputs.version }}
+            org.opencontainers.image.revision=${{ github.event.inputs.sha }}
+            org.opencontainers.image.created=${{ steps.build_info.outputs.timestamp }}
+
+      - name: Create/Update GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.event.inputs.tag }}
+          name: "🚀 Release ${{ github.event.inputs.tag }}"
+          body: |
+            **Built:** `${{ steps.build_info.outputs.timestamp }}`
+
+            ## 🐳 Docker Image
+            `docker pull friesoft/porturl-web:${{ steps.build_info.outputs.version }}`
+          artifacts: "${{ steps.build_info.outputs.artifact-name }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true

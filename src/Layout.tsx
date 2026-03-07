@@ -3,14 +3,12 @@ import {
   Layout as RALayout,
   CheckForApplicationUpdate,
   UserMenu,
-  useTranslate,
   Logout,
   MenuItemLink,
 } from "react-admin";
 import { MyMenu } from "./Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
 import PersonIcon from "@mui/icons-material/Person";
-import { forwardRef } from "react";
 
 const MyUserMenu = () => {
   return (

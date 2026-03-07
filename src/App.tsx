@@ -1,4 +1,3 @@
-import { openApiDataProvider } from "@api-platform/admin";
 import simpleRestProvider from "./restDataProvider";
 import { useAuth } from "react-oidc-context";
 import { useMemo, useCallback } from "react";
@@ -73,7 +72,8 @@ export const App = () => {
 
   const dataProvider = useMemo(() => {
     if (!auth.isAuthenticated) return null;
-    return simpleRestProvider("http://localhost:8080/api", httpClient);
+    const apiUrl = window.env?.apiUrl || "http://localhost:8080/api";
+    return simpleRestProvider(apiUrl, httpClient);
   }, [auth.isAuthenticated, httpClient]);
 
   if (auth.isLoading) {

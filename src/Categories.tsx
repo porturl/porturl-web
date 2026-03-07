@@ -35,7 +35,15 @@ import FolderIcon from "@mui/icons-material/Folder";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 
-const CategoryTitle = ({ record }: any) => {
+interface Category {
+  id: string;
+  name?: string;
+  description?: string;
+  sortOrder?: number;
+  applicationSortMode?: "ALPHABETICAL" | "CUSTOM";
+}
+
+const CategoryTitle = ({ record }: { record?: Category }) => {
   return <span>Category {record ? `"${record.name}"` : ""}</span>;
 };
 
@@ -46,9 +54,19 @@ const MyToolbar = ({ onCancel }: { onCancel: () => void }) => (
   </Toolbar>
 );
 
-const ListActions = ({ viewMode, onToggle }: any) => (
+const ListActions = ({
+  viewMode,
+  onToggle,
+}: {
+  viewMode: string;
+  onToggle: () => void;
+}) => (
   <TopToolbar>
-    <Tooltip title={viewMode === "list" ? "Switch to Grid View" : "Switch to List View"}>
+    <Tooltip
+      title={
+        viewMode === "list" ? "Switch to Grid View" : "Switch to List View"
+      }
+    >
       <IconButton onClick={onToggle}>
         {viewMode === "list" ? <GridViewIcon /> : <ViewListIcon />}
       </IconButton>
@@ -59,7 +77,7 @@ const ListActions = ({ viewMode, onToggle }: any) => (
 );
 
 const CategoryGrid = () => {
-  const { data, isLoading } = useListContext();
+  const { data, isLoading } = useListContext<Category>();
   const navigate = useNavigate();
 
   if (isLoading) return null;
@@ -106,7 +124,11 @@ const CategoryGrid = () => {
                     {record.description}
                   </Typography>
                 )}
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 0.5, display: "block" }}
+                >
                   Order: {record.sortOrder} | {record.applicationSortMode}
                 </Typography>
               </Box>
@@ -120,7 +142,7 @@ const CategoryGrid = () => {
 
 export const CategoryList = () => {
   const [viewMode, setViewMode] = useState(
-    localStorage.getItem("categoryViewMode") || "list"
+    localStorage.getItem("categoryViewMode") || "list",
   );
 
   const handleToggle = () => {

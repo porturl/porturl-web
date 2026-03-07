@@ -90,10 +90,11 @@ export default (
           );
           data.icon = imageJson.filename;
         }
-        delete (data as any).id;
-        delete (data as any).iconUrl;
-        delete (data as any).isLinked;
-        delete (data as any).createdBy;
+        const applicationData = data as Record<string, unknown>;
+        delete applicationData.id;
+        delete applicationData.iconUrl;
+        delete applicationData.isLinked;
+        delete applicationData.createdBy;
       }
 
       const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}/${params.id}`;
@@ -123,10 +124,11 @@ export default (
               );
               data.icon = imageJson.filename;
             }
-            delete (data as any).id;
-            delete (data as any).iconUrl;
-            delete (data as any).isLinked;
-            delete (data as any).createdBy;
+            const applicationData = data as Record<string, unknown>;
+            delete applicationData.id;
+            delete applicationData.iconUrl;
+            delete applicationData.isLinked;
+            delete applicationData.createdBy;
           }
           const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}/${id}`;
           return httpClient(url, {
@@ -152,10 +154,11 @@ export default (
           );
           data.icon = imageJson.filename;
         }
-        delete (data as any).id;
-        delete (data as any).iconUrl;
-        delete (data as any).isLinked;
-        delete (data as any).createdBy;
+        const applicationData = data as Record<string, unknown>;
+        delete applicationData.id;
+        delete applicationData.iconUrl;
+        delete applicationData.isLinked;
+        delete applicationData.createdBy;
       }
 
       const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}`;

@@ -11,7 +11,6 @@ import { useNavigate, Outlet } from "react-router-dom";
 import {
   Grid,
   Card,
-  CardContent,
   CardActionArea,
   Typography,
   Box,
@@ -27,7 +26,6 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import LaunchIcon from "@mui/icons-material/Launch";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
@@ -48,6 +46,11 @@ import {
   useSensors,
   DragOverlay,
   defaultDropAnimationSideEffects,
+  DragStartEvent,
+  DragOverEvent,
+  DragEndEvent,
+  DraggableAttributes,
+  SyntheticListenerMap,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -59,10 +62,33 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { ApplicationEdit, ApplicationCreate } from "./Applications";
-import { CategoryEdit, CategoryCreate } from "./Categories";
+interface Application {
+  id: string;
+  name?: string;
+  url?: string;
+  iconUrl?: string;
+}
 
-const ListViewItem = ({ app, handleMenuOpen, handleCardClick, attributes, listeners }: any) => (
+interface Category {
+  id: string;
+  name: string;
+  applications?: Application[];
+  sortOrder?: number;
+}
+
+const ListViewItem = ({
+  app,
+  handleMenuOpen,
+  handleCardClick,
+  attributes,
+  listeners,
+}: {
+  app: Application;
+  handleMenuOpen: (e: React.MouseEvent<HTMLElement>) => void;
+  handleCardClick: () => void;
+  attributes: DraggableAttributes;
+  listeners: SyntheticListenerMap | undefined;
+}) => (
   <Card
     variant="outlined"
     {...attributes}
@@ -99,11 +125,24 @@ const ListViewItem = ({ app, handleMenuOpen, handleCardClick, attributes, listen
       >
         {app.name?.[0]}
       </Avatar>
-      <Box sx={{ flexGrow: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 2 }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          minWidth: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
         <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
           {app.name}
         </Typography>
-        <Typography variant="caption" color="text.secondary" noWrap sx={{ opacity: 0.7 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          noWrap
+          sx={{ opacity: 0.7 }}
+        >
           {app.url ? new URL(app.url).hostname : ""}
         </Typography>
       </Box>
@@ -116,7 +155,17 @@ const ListViewItem = ({ app, handleMenuOpen, handleCardClick, attributes, listen
   </Card>
 );
 
-const SortableApplication = ({ app, categoryId, refetch, viewMode }: any) => {
+const SortableApplication = ({
+  app,
+  categoryId,
+  refetch,
+  viewMode,
+}: {
+  app: Application;
+  categoryId: string;
+  refetch: () => void;
+  viewMode: string;
+}) => {
   const navigate = useNavigate();
   const notify = useNotify();
   const [deleteOne] = useDelete();
@@ -172,7 +221,7 @@ const SortableApplication = ({ app, categoryId, refetch, viewMode }: any) => {
             notify("Application deleted", { type: "info" });
             refetch();
           },
-          onError: (error: any) =>
+          onError: (error: Error) =>
             notify(`Error: ${error.message}`, { type: "error" }),
         },
       );
@@ -289,7 +338,17 @@ const SortableApplication = ({ app, categoryId, refetch, viewMode }: any) => {
   );
 };
 
-const SortableCategory = ({ category, onEditClick, refetch, viewMode }: any) => {
+const SortableCategory = ({
+  category,
+  onEditClick,
+  refetch,
+  viewMode,
+}: {
+  category: Category;
+  onEditClick: (id: string) => void;
+  refetch: () => void;
+  viewMode: string;
+}) => {
   const notify = useNotify();
   const [deleteOne] = useDelete();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -344,7 +403,7 @@ const SortableCategory = ({ category, onEditClick, refetch, viewMode }: any) => 
             notify("Category deleted", { type: "info" });
             refetch();
           },
-          onError: (error: any) =>
+          onError: (error: Error) =>
             notify(`Error: ${error.message}`, { type: "error" }),
         },
       );
@@ -420,15 +479,19 @@ const SortableCategory = ({ category, onEditClick, refetch, viewMode }: any) => 
         </Box>
         <Divider sx={{ mb: 2 }} />
         <SortableContext
-          items={category.applications?.map((app: any) => `app-${app.id}`) || []}
-          strategy={viewMode === "grid" ? rectSortingStrategy : verticalListSortingStrategy}
+          items={category.applications?.map((app) => `app-${app.id}`) || []}
+          strategy={
+            viewMode === "grid"
+              ? rectSortingStrategy
+              : verticalListSortingStrategy
+          }
         >
           <Grid
             container
             spacing={viewMode === "grid" ? 2 : 1}
             direction={viewMode === "grid" ? "row" : "column"}
           >
-            {category.applications?.map((app: any) => (
+            {category.applications?.map((app) => (
               <SortableApplication
                 key={app.id}
                 app={app}
@@ -446,11 +509,16 @@ const SortableCategory = ({ category, onEditClick, refetch, viewMode }: any) => 
 
 const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [localCategories, setLocalCategories] = useState<any[]>([]);
-  const [activeId, setActiveId] = useState<any>(null);
-  const [activeData, setActiveData] = useState<any>(null);
+  const [localCategories, setLocalCategories] = useState<Category[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeData, setActiveData] = useState<{
+    type: "application" | "category";
+    app?: Application;
+    category?: Category;
+    categoryId?: string;
+  } | null>(null);
   const [viewMode, setViewMode] = useState(
-    localStorage.getItem("dashboardViewMode") || "grid"
+    localStorage.getItem("dashboardViewMode") || "grid",
   );
 
   const handleToggleViewMode = () => {
@@ -468,7 +536,7 @@ const Dashboard = () => {
     isLoading,
     error,
     refetch,
-  } = useGetList("categories", {
+  } = useGetList<Category>("categories", {
     pagination: { page: 1, perPage: 100 },
     sort: { field: "sortOrder", order: "ASC" },
   });
@@ -495,12 +563,12 @@ const Dashboard = () => {
 
     const query = searchQuery.toLowerCase();
     return localCategories
-      .map((category: any) => {
+      .map((category: Category) => {
         const categoryNameMatches = category.name.toLowerCase().includes(query);
         const filteredApps = category.applications?.filter(
-          (app: any) =>
-            app.name.toLowerCase().includes(query) ||
-            app.url.toLowerCase().includes(query),
+          (app: Application) =>
+            app.name?.toLowerCase().includes(query) ||
+            app.url?.toLowerCase().includes(query),
         );
 
         if (categoryNameMatches || (filteredApps && filteredApps.length > 0)) {
@@ -513,24 +581,35 @@ const Dashboard = () => {
         }
         return null;
       })
-      .filter((category: any) => category !== null);
+      .filter((category): category is Category => category !== null);
   }, [localCategories, searchQuery]);
 
-  const handleDragStart = (event: any) => {
-    setActiveId(event.active.id);
-    setActiveData(event.active.data.current);
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id.toString());
+    setActiveData(
+      event.active.data.current as unknown as {
+        type: "application" | "category";
+        app?: Application;
+        category?: Category;
+        categoryId?: string;
+      },
+    );
   };
 
-  const handleDragOver = (event: any) => {
+  const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
 
     const activeIdStr = active.id.toString();
     const overIdStr = over.id.toString();
 
-    if (activeIdStr.startsWith("app-") && overIdStr.startsWith("cat-")) {
+    if (
+      activeIdStr.startsWith("app-") &&
+      overIdStr.startsWith("cat-") &&
+      activeData?.app
+    ) {
       const activeAppId = activeData.app.id;
-      const overCatId = parseInt(overIdStr.replace("cat-", ""));
+      const overCatId = overIdStr.replace("cat-", "");
       const activeCatId = activeData.categoryId;
 
       if (activeCatId === overCatId) return;
@@ -540,22 +619,24 @@ const Dashboard = () => {
         const activeCat = newCats.find((c) => c.id === activeCatId);
         const overCat = newCats.find((c) => c.id === overCatId);
 
-        if (activeCat && overCat) {
+        if (activeCat && overCat && activeCat.applications) {
           const appIndex = activeCat.applications.findIndex(
-            (a: any) => a.id === activeAppId,
+            (a: Application) => a.id === activeAppId,
           );
-          const [app] = activeCat.applications.splice(appIndex, 1);
-          if (!overCat.applications) overCat.applications = [];
-          overCat.applications.push(app);
+          if (appIndex !== -1) {
+            const [app] = activeCat.applications.splice(appIndex, 1);
+            if (!overCat.applications) overCat.applications = [];
+            overCat.applications.push(app);
 
-          setActiveData({ ...activeData, categoryId: overCatId });
+            setActiveData({ ...activeData, categoryId: overCatId });
+          }
         }
         return newCats;
       });
     }
   };
 
-  const handleDragEnd = async (event: any) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
     setActiveData(null);
@@ -588,17 +669,17 @@ const Dashboard = () => {
       try {
         await dataProvider.reorderCategories({ data: updatedCategories });
         notify("Order saved", { type: "success" });
-      } catch (e) {
+      } catch {
         notify("Failed to save order", { type: "error" });
         refetch();
       }
     } else if (activeIdStr.startsWith("app-")) {
-      let activeCat: any;
+      let activeCat: Category | undefined;
       let appIndex: number = -1;
 
       updatedCategories.forEach((cat) => {
         const idx = cat.applications?.findIndex(
-          (a: any) => `app-${a.id}` === activeIdStr,
+          (a: Application) => `app-${a.id}` === activeIdStr,
         );
         if (idx !== -1 && idx !== undefined) {
           activeCat = cat;
@@ -606,15 +687,15 @@ const Dashboard = () => {
         }
       });
 
-      if (!activeCat) return;
+      if (!activeCat || !activeCat.applications) return;
 
       if (overIdStr.startsWith("app-")) {
-        let overCat: any;
+        let overCat: Category | undefined;
         let overIndex: number = -1;
 
         updatedCategories.forEach((cat) => {
           const idx = cat.applications?.findIndex(
-            (a: any) => `app-${a.id}` === overIdStr,
+            (a: Application) => `app-${a.id}` === overIdStr,
           );
           if (idx !== -1 && idx !== undefined) {
             overCat = cat;
@@ -622,7 +703,7 @@ const Dashboard = () => {
           }
         });
 
-        if (overCat) {
+        if (overCat && overCat.applications) {
           if (activeCat.id === overCat.id) {
             activeCat.applications = arrayMove(
               activeCat.applications,
@@ -640,7 +721,7 @@ const Dashboard = () => {
       try {
         await dataProvider.reorderApplications({ data: updatedCategories });
         notify("Order saved", { type: "success" });
-      } catch (e) {
+      } catch {
         notify("Failed to save order", { type: "error" });
         refetch();
       }
@@ -686,8 +767,21 @@ const Dashboard = () => {
             </Button>
           </Box>
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: { xs: "100%", sm: "auto" } }}>
-          <Tooltip title={viewMode === "grid" ? "Switch to List View" : "Switch to Grid View"}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            width: { xs: "100%", sm: "auto" },
+          }}
+        >
+          <Tooltip
+            title={
+              viewMode === "grid"
+                ? "Switch to List View"
+                : "Switch to Grid View"
+            }
+          >
             <IconButton onClick={handleToggleViewMode} color="primary">
               {viewMode === "grid" ? <ViewListIcon /> : <GridViewIcon />}
             </IconButton>
@@ -733,14 +827,18 @@ const Dashboard = () => {
       >
         <SortableContext
           items={filteredCategories.map((c) => `cat-${c.id}`)}
-          strategy={viewMode === "grid" ? rectSortingStrategy : verticalListSortingStrategy}
+          strategy={
+            viewMode === "grid"
+              ? rectSortingStrategy
+              : verticalListSortingStrategy
+          }
         >
           <Grid container spacing={viewMode === "grid" ? 3 : 0}>
-            {filteredCategories.map((category: any) => (
+            {filteredCategories.map((category) => (
               <SortableCategory
                 key={category.id}
                 category={category}
-                onEditClick={(id: any) => navigate(`/categories/${id}`)}
+                onEditClick={(id: string) => navigate(`/categories/${id}`)}
                 refetch={refetch}
                 viewMode={viewMode}
               />
@@ -766,7 +864,7 @@ const Dashboard = () => {
                   variant="h6"
                   sx={{ fontWeight: 600, color: "primary.main" }}
                 >
-                  {activeData.category.name}
+                  {activeData?.category?.name}
                 </Typography>
                 <Divider sx={{ my: 1 }} />
               </Box>
@@ -785,13 +883,13 @@ const Dashboard = () => {
                 }}
               >
                 <Avatar
-                  src={activeData.app.iconUrl}
+                  src={activeData?.app?.iconUrl}
                   sx={{ width: 40, height: 40, mr: 2 }}
                 >
-                  {activeData.app.name?.[0]}
+                  {activeData?.app?.name?.[0]}
                 </Avatar>
                 <Typography variant="subtitle2" noWrap>
-                  {activeData.app.name}
+                  {activeData?.app?.name}
                 </Typography>
               </Card>
             )

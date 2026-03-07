@@ -4,7 +4,6 @@ import {
   Box,
   Typography,
   Avatar,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -13,11 +12,11 @@ import {
   Slider,
 } from "@mui/material";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
-import Cropper from "react-easy-crop";
+import Cropper, { Area } from "react-easy-crop";
 
 const getCroppedImg = async (
   imageSrc: string,
-  pixelCrop: any,
+  pixelCrop: Area,
 ): Promise<Blob> => {
   const image = new Image();
   image.src = imageSrc;
@@ -63,16 +62,16 @@ const ImageEditor = ({ source, label }: { source: string; label?: string }) => {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Determine what to show as the current preview
   // 1. Newly selected/cropped file (local blob URL)
   // 2. Existing iconUrl from record
-  const currentPreview = value?.src || record?.iconUrl;
+  const currentPreview = value?.src || (record?.iconUrl as string | undefined);
 
   const onCropComplete = useCallback(
-    (_croppedArea: any, croppedAreaPixels: any) => {
+    (_croppedArea: Area, croppedAreaPixels: Area) => {
       setCroppedAreaPixels(croppedAreaPixels);
     },
     [],

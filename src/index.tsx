@@ -29,9 +29,9 @@ const Root = () => {
         }
 
         setOidcConfig(getOidcConfig(authority, clientId));
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error fetching runtime configuration:", err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : String(err));
       }
     };
 

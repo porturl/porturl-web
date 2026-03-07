@@ -9,7 +9,7 @@ export const getOidcConfig = (
   redirect_uri: window.location.origin,
   scope: "openid profile email offline_access",
   automaticSilentRenew: true,
-  onSigninCallback: (_user: any): void => {
+  onSigninCallback: (): void => {
     window.history.replaceState({}, document.title, window.location.pathname);
   },
 });

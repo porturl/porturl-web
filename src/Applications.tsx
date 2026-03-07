@@ -34,7 +34,6 @@ import {
   Button,
   Grid,
   Card,
-  CardContent,
   CardActionArea,
   Tooltip,
 } from "@mui/material";
@@ -47,16 +46,27 @@ import { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import ImageEditor from "./ImageEditor";
 
-const ApplicationTitle = ({ record }: any) => {
+interface Application {
+  id: string;
+  name?: string;
+  url?: string;
+  iconUrl?: string;
+  clientId?: string;
+  realm?: string;
+  availableRoles?: string[];
+  categories?: { id: string; name?: string }[];
+}
+
+const ApplicationTitle = ({ record }: { record?: Application }) => {
   return <span>Application {record ? `"${record.name}"` : ""}</span>;
 };
 
 const AvatarField = ({ source }: { source: string }) => {
-  const record = useRecordContext();
+  const record = useRecordContext<Application>();
   if (!record) return null;
   return (
     <Avatar
-      src={record[source]}
+      src={record[source as keyof Application] as string}
       alt={record.name}
       sx={{ width: 40, height: 40 }}
     >
@@ -67,16 +77,18 @@ const AvatarField = ({ source }: { source: string }) => {
 
 const RolesFields = ({ isLinked }: { isLinked: boolean }) => {
   const { setValue } = useFormContext();
-  const record = useRecordContext();
+  const record = useRecordContext<Application>();
   const dataProvider = useDataProvider();
   const availableRoles = useWatch({ name: "availableRoles" }) || [];
   const [newRole, setNewRole] = useState("");
 
   useEffect(() => {
     if (record?.id && isLinked) {
-      dataProvider.getApplicationRoles(record.id).then(({ data }: any) => {
-        setValue("availableRoles", data);
-      });
+      dataProvider
+        .getApplicationRoles(record.id)
+        .then(({ data }: { data: string[] }) => {
+          setValue("availableRoles", data);
+        });
     }
   }, [record?.id, isLinked, dataProvider, setValue]);
 
@@ -160,7 +172,7 @@ const KeycloakFields = () => {
     setIsLoadingRealms(true);
     dataProvider
       .listRealms()
-      .then(({ data }: any) => {
+      .then(({ data }: { data: string[] }) => {
         setRealms(data.map((r: string) => ({ id: r, name: r })));
       })
       .finally(() => setIsLoadingRealms(false));
@@ -171,9 +183,9 @@ const KeycloakFields = () => {
       setIsScanningClients(true);
       dataProvider
         .scanRealmClients({ realm })
-        .then(({ data }: any) => {
+        .then(({ data }: { data: { clientId: string; name?: string }[] }) => {
           setClients(
-            data.map((c: any) => ({
+            data.map((c: { clientId: string; name?: string }) => ({
               id: c.clientId,
               name: c.name || c.clientId,
             })),
@@ -239,9 +251,19 @@ const KeycloakFields = () => {
   );
 };
 
-const ListActions = ({ viewMode, onToggle }: any) => (
+const ListActions = ({
+  viewMode,
+  onToggle,
+}: {
+  viewMode: string;
+  onToggle: () => void;
+}) => (
   <TopToolbar>
-    <Tooltip title={viewMode === "list" ? "Switch to Grid View" : "Switch to List View"}>
+    <Tooltip
+      title={
+        viewMode === "list" ? "Switch to Grid View" : "Switch to List View"
+      }
+    >
       <IconButton onClick={onToggle}>
         {viewMode === "list" ? <GridViewIcon /> : <ViewListIcon />}
       </IconButton>
@@ -252,7 +274,7 @@ const ListActions = ({ viewMode, onToggle }: any) => (
 );
 
 const ApplicationGrid = () => {
-  const { data, isLoading } = useListContext();
+  const { data, isLoading } = useListContext<Application>();
   const navigate = useNavigate();
 
   if (isLoading) return null;
@@ -324,7 +346,10 @@ const ApplicationGrid = () => {
                         boxShadow: 1,
                       }}
                     >
-                      <Typography variant="caption" sx={{ fontWeight: "bold", fontSize: 10 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: "bold", fontSize: 10 }}
+                      >
                         K
                       </Typography>
                     </Box>
@@ -356,7 +381,7 @@ const ApplicationGrid = () => {
 
 export const ApplicationList = () => {
   const [viewMode, setViewMode] = useState(
-    localStorage.getItem("applicationViewMode") || "list"
+    localStorage.getItem("applicationViewMode") || "list",
   );
 
   const handleToggle = () => {
@@ -426,9 +451,9 @@ export const ApplicationEdit = () => {
           actions={false}
           component="div"
           sx={{ "& .RaEdit-main": { mt: 0 } }}
-          transform={(data) => ({
+          transform={(data: Application) => ({
             ...data,
-            categories: data.categories?.map((id: any) =>
+            categories: data.categories?.map((id: string | { id: string }) =>
               typeof id === "object" ? id : { id },
             ),
             availableRoles: data.availableRoles,
@@ -448,7 +473,9 @@ export const ApplicationEdit = () => {
               <SelectArrayInput
                 optionText="name"
                 fullWidth
-                format={(value: any[]) => value?.map((v) => v.id || v)}
+                format={(value: (string | { id: string })[]) =>
+                  value?.map((v) => (typeof v === "object" ? v.id : v))
+                }
               />
             </ReferenceArrayInput>
           </SimpleForm>
@@ -490,9 +517,11 @@ export const ApplicationCreate = () => {
           actions={false}
           component="div"
           sx={{ "& .RaCreate-main": { mt: 0 } }}
-          transform={(data) => ({
+          transform={(data: Application) => ({
             ...data,
-            categories: data.categories?.map((id: any) => ({ id })),
+            categories: data.categories?.map((id: string | { id: string }) =>
+              typeof id === "object" ? id : { id },
+            ),
             roles: data.availableRoles,
           })}
         >

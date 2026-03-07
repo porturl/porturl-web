@@ -1,4 +1,4 @@
-import { useDataProvider, useNotify, Loading, Error, Title } from "react-admin";
+import { useDataProvider, useNotify, Title } from "react-admin";
 import {
   Box,
   Card,
@@ -11,7 +11,7 @@ import {
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import WarningIcon from "@mui/icons-material/Warning";
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 
 const Settings = () => {
   const dataProvider = useDataProvider();
@@ -35,15 +35,17 @@ const Settings = () => {
       a.download = "porturl_export.json";
       a.click();
       notify("Export successful", { type: "success" });
-    } catch (e: any) {
-      notify(`Export failed: ${e.message}`, { type: "error" });
+    } catch (e: unknown) {
+      notify(`Export failed: ${e instanceof Error ? e.message : String(e)}`, {
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleImport = async (event: any) => {
-    const file = event.target.files[0];
+  const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     setLoading(true);
@@ -55,11 +57,13 @@ const Settings = () => {
         notify("Import successful", { type: "success" });
       };
       reader.readAsText(file);
-    } catch (e: any) {
-      notify(`Import failed: ${e.message}`, { type: "error" });
+    } catch (e: unknown) {
+      notify(`Import failed: ${e instanceof Error ? e.message : String(e)}`, {
+        type: "error",
+      });
     } finally {
       setLoading(false);
-      event.target.value = null;
+      event.target.value = "";
     }
   };
 

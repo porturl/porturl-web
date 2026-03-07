@@ -16,7 +16,14 @@ import { Avatar } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 
-const UserTitle = ({ record }: any) => {
+interface User {
+  id: string;
+  email: string;
+  avatarUrl?: string;
+  providerUserId?: string;
+}
+
+const UserTitle = ({ record }: { record?: User }) => {
   return <span>User {record ? `"${record.email}"` : ""}</span>;
 };
 
@@ -34,11 +41,11 @@ const EditActions = () => {
 };
 
 const AvatarField = ({ source }: { source: string }) => {
-  const record = useRecordContext();
+  const record = useRecordContext<User>();
   if (!record) return null;
   return (
     <Avatar
-      src={record[source]}
+      src={record[source as keyof User] as string}
       alt={record.email}
       sx={{ width: 40, height: 40 }}
     >

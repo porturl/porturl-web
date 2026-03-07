@@ -1,4 +1,4 @@
-import simpleRestProvider from "./restDataProvider";
+import simpleRestProvider from "./services/restDataProvider";
 import { useAuth } from "react-oidc-context";
 import { useMemo, useCallback } from "react";
 import {
@@ -9,17 +9,17 @@ import {
   fetchUtils,
 } from "react-admin";
 import { Route } from "react-router-dom";
-import { Layout } from "./Layout";
-import Dashboard from "./Dashboard";
+import { Layout } from "./components/Layout";
+import Dashboard from "./pages/Dashboard";
 import {
   ApplicationList,
   ApplicationEdit,
   ApplicationCreate,
-} from "./Applications";
-import { CategoryList, CategoryEdit, CategoryCreate } from "./Categories";
-import { UserList, UserEdit, UserCreate } from "./Users";
-import Profile from "./Profile";
-import Settings from "./Settings";
+} from "./pages/Applications";
+import { CategoryList, CategoryEdit, CategoryCreate } from "./pages/Categories";
+import { UserList, UserEdit, UserCreate } from "./pages/Users";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 
 export const App = () => {
   const auth = useAuth();

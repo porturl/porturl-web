@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import { AuthProvider, AuthProviderProps } from "react-oidc-context";
 import { App } from "./App";
-import { getOidcConfig } from "./oidcConfig";
+import { getOidcConfig } from "./services/oidcConfig";
 
 const Root = () => {
   const [oidcConfig, setOidcConfig] = useState<AuthProviderProps | null>(null);

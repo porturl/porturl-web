@@ -44,7 +44,7 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import ImageEditor from "./ImageEditor";
+import ImageEditor from "../components/ImageEditor";
 
 interface Application {
   id: string;

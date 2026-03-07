@@ -43,6 +43,7 @@ import ViewListIcon from "@mui/icons-material/ViewList";
 import GridViewIcon from "@mui/icons-material/GridView";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useFormContext, useWatch } from "react-hook-form";
 import ImageEditor from "../components/ImageEditor";
 
@@ -163,39 +164,30 @@ const KeycloakFields = () => {
   const realm = useWatch({ name: "realm" });
   const clientId = useWatch({ name: "clientId" });
   const name = useWatch({ name: "name" });
-  const [realms, setRealms] = useState<{ id: string; name: string }[]>([]);
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
-  const [isLoadingRealms, setIsLoadingRealms] = useState(false);
-  const [isScanningClients, setIsScanningClients] = useState(false);
 
-  useEffect(() => {
-    setIsLoadingRealms(true);
-    dataProvider
-      .listRealms()
-      .then(({ data }: { data: string[] }) => {
-        setRealms(data.map((r: string) => ({ id: r, name: r })));
-      })
-      .finally(() => setIsLoadingRealms(false));
-  }, [dataProvider]);
+  const { data: realms = [], isLoading: isLoadingRealms } = useQuery({
+    queryKey: ["realms"],
+    queryFn: () =>
+      dataProvider
+        .listRealms()
+        .then(({ data }: { data: string[] }) =>
+          data.map((r: string) => ({ id: r, name: r })),
+        ),
+  });
 
-  useEffect(() => {
-    if (realm) {
-      setIsScanningClients(true);
+  const { data: clients = [], isFetching: isScanningClients } = useQuery({
+    queryKey: ["realmClients", realm],
+    queryFn: () =>
       dataProvider
         .scanRealmClients({ realm })
-        .then(({ data }: { data: { clientId: string; name?: string }[] }) => {
-          setClients(
-            data.map((c: { clientId: string; name?: string }) => ({
-              id: c.clientId,
-              name: c.name || c.clientId,
-            })),
-          );
-        })
-        .finally(() => setIsScanningClients(false));
-    } else {
-      setClients([]);
-    }
-  }, [realm, dataProvider]);
+        .then(({ data }: { data: { clientId: string; name?: string }[] }) =>
+          data.map((c: { clientId: string; name?: string }) => ({
+            id: c.clientId,
+            name: c.name || c.clientId,
+          })),
+        ),
+    enabled: !!realm,
+  });
 
   const handleClientChange = (val: string) => {
     if (val && !name) {

@@ -6,7 +6,7 @@ import {
   useNotify,
   useDelete,
 } from "react-admin";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import {
   Grid,
@@ -541,11 +541,13 @@ const Dashboard = () => {
     sort: { field: "sortOrder", order: "ASC" },
   });
 
-  useEffect(() => {
-    if (categories) {
-      setLocalCategories(categories);
-    }
-  }, [categories]);
+  const [lastCategories, setLastCategories] = useState<Category[] | undefined>(
+    undefined,
+  );
+  if (categories !== lastCategories) {
+    setLocalCategories(categories || []);
+    setLastCategories(categories);
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

@@ -1,6 +1,6 @@
 import simpleRestProvider from "./services/restDataProvider";
 import { useAuth } from "react-oidc-context";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect } from "react";
 import {
   Admin,
   Resource,
@@ -23,6 +23,24 @@ import Settings from "./pages/Settings";
 
 export const App = () => {
   const auth = useAuth();
+
+  useEffect(() => {
+    if (
+      !auth.isLoading &&
+      !auth.isAuthenticated &&
+      !auth.activeNavigator &&
+      !auth.error
+    ) {
+      auth.signinRedirect();
+    }
+  }, [
+    auth.isLoading,
+    auth.isAuthenticated,
+    auth.activeNavigator,
+    auth.error,
+    auth.signinRedirect,
+    auth,
+  ]);
 
   const authProvider = useMemo<AuthProvider>(
     () => ({
@@ -95,8 +113,7 @@ export const App = () => {
           flexDirection: "column",
         }}
       >
-        <h1>Welcome to PortUrl</h1>
-        <button onClick={() => auth.signinRedirect()}>Log in</button>
+        <h1>Redirecting to login...</h1>
       </div>
     );
   }

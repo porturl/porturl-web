@@ -7,6 +7,7 @@ import {
   CustomRoutes,
   AuthProvider,
   fetchUtils,
+  defaultTheme,
 } from "react-admin";
 import { Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
@@ -120,11 +121,41 @@ export const App = () => {
 
   if (!dataProvider) return null;
 
+  const theme = {
+    ...defaultTheme,
+    components: {
+      ...defaultTheme.components,
+      RaSidebar: {
+        styleOverrides: {
+          root: {
+            "& .RaSidebar-fixed": {
+              backgroundColor: "#f5f5f5",
+            },
+          },
+        },
+      },
+      RaLayout: {
+        styleOverrides: {
+          root: {
+            minWidth: 0,
+            "& .RaLayout-appFrame": {
+              minWidth: 0,
+            },
+            "& .RaLayout-content": {
+              minWidth: 0,
+            },
+          },
+        },
+      },
+    },
+  };
+
   return (
     <Admin
       authProvider={authProvider}
       dataProvider={dataProvider}
       layout={Layout}
+      theme={theme}
     >
       <Resource name="applications" list={ApplicationList} />
       <Resource name="categories" list={CategoryList} />

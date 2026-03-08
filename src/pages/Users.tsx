@@ -11,8 +11,9 @@ import {
   useRecordContext,
   TopToolbar,
   Button as RAButton,
+  SimpleList,
 } from "react-admin";
-import { Avatar } from "@mui/material";
+import { Avatar, useMediaQuery, Theme } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 
@@ -54,16 +55,33 @@ const AvatarField = ({ source }: { source: string }) => {
   );
 };
 
-export const UserList = () => (
-  <List>
-    <Datagrid rowClick="edit">
-      <TextField source="id" />
-      <AvatarField source="avatarUrl" />
-      <EmailField source="email" />
-      <TextField source="providerUserId" />
-    </Datagrid>
-  </List>
-);
+export const UserList = () => {
+  const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
+  return (
+    <List>
+      {isSmall ? (
+        <SimpleList
+          primaryText={(record) => record.email}
+          secondaryText={(record) => record.id}
+          tertiaryText={(record) => record.providerUserId}
+          linkType="edit"
+          leftAvatar={(record) => (
+            <Avatar src={record.avatarUrl} alt={record.email}>
+              {record.email?.[0]}
+            </Avatar>
+          )}
+        />
+      ) : (
+        <Datagrid rowClick="edit">
+          <TextField source="id" />
+          <AvatarField source="avatarUrl" />
+          <EmailField source="email" />
+          <TextField source="providerUserId" />
+        </Datagrid>
+      )}
+    </List>
+  );
+};
 
 export const UserEdit = () => (
   <Edit title={<UserTitle />} actions={<EditActions />}>

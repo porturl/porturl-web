@@ -15,6 +15,7 @@ import {
   ExportButton,
   CreateButton,
   useListContext,
+  SimpleList,
 } from "react-admin";
 import {
   Box,
@@ -27,6 +28,8 @@ import {
   Card,
   CardActionArea,
   Typography,
+  useMediaQuery,
+  Theme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ViewListIcon from "@mui/icons-material/ViewList";
@@ -85,7 +88,7 @@ const CategoryGrid = () => {
   return (
     <Grid container spacing={2} sx={{ mt: 1, p: 1 }}>
       {data.map((record) => (
-        <Grid item key={record.id} xs={12} sm={6} md={4} lg={3}>
+        <Grid key={record.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
           <Card
             variant="outlined"
             sx={{
@@ -141,6 +144,7 @@ const CategoryGrid = () => {
 };
 
 export const CategoryList = () => {
+  const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
   const [viewMode, setViewMode] = useState(
     localStorage.getItem("categoryViewMode") || "list",
   );
@@ -158,12 +162,22 @@ export const CategoryList = () => {
       sx={{ mt: 2 }}
     >
       {viewMode === "list" ? (
-        <Datagrid rowClick="edit">
-          <TextField source="name" />
-          <TextField source="sortOrder" />
-          <TextField source="applicationSortMode" />
-          <TextField source="description" />
-        </Datagrid>
+        isSmall ? (
+          <SimpleList
+            primaryText={(record) => record.name}
+            secondaryText={(record) => record.description}
+            tertiaryText={(record) => record.applicationSortMode}
+            linkType="edit"
+            leftIcon={() => <FolderIcon />}
+          />
+        ) : (
+          <Datagrid rowClick="edit">
+            <TextField source="name" />
+            <TextField source="sortOrder" />
+            <TextField source="applicationSortMode" />
+            <TextField source="description" />
+          </Datagrid>
+        )
       ) : (
         <CategoryGrid />
       )}

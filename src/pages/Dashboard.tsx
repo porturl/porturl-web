@@ -25,6 +25,8 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  useMediaQuery,
+  Theme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -236,12 +238,13 @@ const SortableApplication = ({
 
   return (
     <Grid
-      item
-      xs={12}
-      sm={viewMode === "grid" ? 6 : 12}
-      md={viewMode === "grid" ? 4 : 12}
-      lg={viewMode === "grid" ? 3 : 12}
-      xl={viewMode === "grid" ? 2 : 12}
+      size={{
+        xs: 12,
+        sm: viewMode === "grid" ? 6 : 12,
+        md: viewMode === "grid" ? 4 : 12,
+        lg: viewMode === "grid" ? 3 : 12,
+        xl: viewMode === "grid" ? 2 : 12,
+      }}
       ref={setNodeRef}
       style={style}
     >
@@ -412,12 +415,13 @@ const SortableCategory = ({
 
   return (
     <Grid
-      item
-      xs={12}
-      sm={12}
-      md={viewMode === "grid" ? 6 : 6}
-      lg={viewMode === "grid" ? 4 : 6}
-      xl={viewMode === "grid" ? 3 : 6}
+      size={{
+        xs: 12,
+        sm: 12,
+        md: viewMode === "grid" ? 6 : 6,
+        lg: viewMode === "grid" ? 4 : 6,
+        xl: viewMode === "grid" ? 3 : 6,
+      }}
       ref={setNodeRef}
       style={style}
     >
@@ -508,6 +512,7 @@ const SortableCategory = ({
 };
 
 const Dashboard = () => {
+  const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
   const [searchQuery, setSearchQuery] = useState("");
   const [localCategories, setLocalCategories] = useState<Category[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -746,11 +751,21 @@ const Dashboard = () => {
           gap: 2,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <Typography variant="h4" sx={{ fontWeight: 500 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: { xs: 1, sm: 3 },
+            flexWrap: "wrap",
+          }}
+        >
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 500, fontSize: { xs: "1.5rem", sm: "2.125rem" } }}
+          >
             Applications
           </Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -793,7 +808,7 @@ const Dashboard = () => {
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ width: { xs: "100%", sm: 300 } }}
+            sx={{ width: { xs: "100%", sm: 200, md: 300 } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -835,7 +850,7 @@ const Dashboard = () => {
               : verticalListSortingStrategy
           }
         >
-          <Grid container spacing={viewMode === "grid" ? 3 : 0}>
+          <Grid container spacing={viewMode === "grid" ? 3 : 0} sx={{ width: "100%", m: 0 }}>
             {filteredCategories.map((category) => (
               <SortableCategory
                 key={category.id}

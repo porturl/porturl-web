@@ -20,6 +20,7 @@ import {
   ExportButton,
   CreateButton,
   useListContext,
+  SimpleList,
 } from "react-admin";
 import {
   Avatar,
@@ -36,6 +37,8 @@ import {
   Card,
   CardActionArea,
   Tooltip,
+  useMediaQuery,
+  Theme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
@@ -274,7 +277,7 @@ const ApplicationGrid = () => {
   return (
     <Grid container spacing={2} sx={{ mt: 1, p: 1 }}>
       {data.map((record) => (
-        <Grid item key={record.id} xs={12} sm={6} md={4} lg={3}>
+        <Grid key={record.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
           <Card
             variant="outlined"
             sx={{
@@ -372,6 +375,7 @@ const ApplicationGrid = () => {
 };
 
 export const ApplicationList = () => {
+  const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
   const [viewMode, setViewMode] = useState(
     localStorage.getItem("applicationViewMode") || "list",
   );
@@ -388,13 +392,27 @@ export const ApplicationList = () => {
       sx={{ mt: 2 }}
     >
       {viewMode === "list" ? (
-        <Datagrid rowClick="edit">
-          <AvatarField source="iconUrl" />
-          <TextField source="name" />
-          <UrlField source="url" />
-          <TextField source="clientId" />
-          <TextField source="realm" />
-        </Datagrid>
+        isSmall ? (
+          <SimpleList
+            primaryText={(record) => record.name}
+            secondaryText={(record) => record.url}
+            tertiaryText={(record) => record.realm}
+            linkType="edit"
+            leftAvatar={(record) => (
+              <Avatar src={record.iconUrl} alt={record.name}>
+                {record.name?.[0]}
+              </Avatar>
+            )}
+          />
+        ) : (
+          <Datagrid rowClick="edit">
+            <AvatarField source="iconUrl" />
+            <TextField source="name" />
+            <UrlField source="url" />
+            <TextField source="clientId" />
+            <TextField source="realm" />
+          </Datagrid>
+        )
       ) : (
         <ApplicationGrid />
       )}

@@ -168,6 +168,7 @@ export const App = () => {
       dataProvider={dataProvider}
       layout={Layout}
       theme={theme}
+      disableTelemetry={true}
     >
       <Resource name="applications" list={ApplicationList} />
       <Resource name="categories" list={CategoryList} />

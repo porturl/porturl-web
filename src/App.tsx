@@ -1,6 +1,6 @@
 import simpleRestProvider from "./services/restDataProvider";
 import { useAuth } from "react-oidc-context";
-import { useMemo, useCallback, useEffect } from "react";
+import { useMemo, useCallback, useEffect, useState } from "react";
 import {
   Admin,
   Resource,
@@ -8,6 +8,7 @@ import {
   AuthProvider,
   fetchUtils,
   defaultTheme,
+  DataProvider,
 } from "react-admin";
 import { Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
@@ -89,12 +90,23 @@ export const App = () => {
     [auth.user?.access_token],
   );
 
-  const dataProvider = useMemo(() => {
-    if (!auth.isAuthenticated) return null;
-    const apiUrl = window.env?.apiUrl || "http://localhost:8080/api";
-    return simpleRestProvider(apiUrl, httpClient);
-  }, [auth.isAuthenticated, httpClient]);
+  const [dataProvider, setDataProvider] = useState<DataProvider | null>(null);
 
+  useEffect(() => {
+    if (!auth.isAuthenticated) {
+      queueMicrotask(() => {
+        setDataProvider((prev) => (prev !== null ? null : prev));
+      });
+      return;
+    }
+
+    if (dataProvider === null) {
+      const apiUrl = window.env?.apiUrl || "http://localhost:8080/api";
+      simpleRestProvider(apiUrl, httpClient).then((provider) => {
+        setDataProvider(provider);
+      });
+    }
+  }, [auth.isAuthenticated, httpClient, dataProvider]);
   if (auth.isLoading) {
     return <div>Loading...</div>;
   }

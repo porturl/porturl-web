@@ -25,8 +25,6 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  useMediaQuery,
-  Theme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -512,7 +510,6 @@ const SortableCategory = ({
 };
 
 const Dashboard = () => {
-  const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
   const [searchQuery, setSearchQuery] = useState("");
   const [localCategories, setLocalCategories] = useState<Category[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -736,7 +733,7 @@ const Dashboard = () => {
   };
 
   if (isLoading) return <Loading />;
-  if (error) return <Error />;
+  if (error) return <Error error={error} />;
   if (!categories) return null;
 
   return (
@@ -850,7 +847,11 @@ const Dashboard = () => {
               : verticalListSortingStrategy
           }
         >
-          <Grid container spacing={viewMode === "grid" ? 3 : 0} sx={{ width: "100%", m: 0 }}>
+          <Grid
+            container
+            spacing={viewMode === "grid" ? 3 : 0}
+            sx={{ width: "100%", m: 0 }}
+          >
             {filteredCategories.map((category) => (
               <SortableCategory
                 key={category.id}

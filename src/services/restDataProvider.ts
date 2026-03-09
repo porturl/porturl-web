@@ -1,5 +1,7 @@
-// import { stringify } from 'query-string';
 import { fetchUtils, DataProvider } from "react-admin";
+import { openApiDataProvider } from "@api-platform/admin";
+import simpleRestProvider from "ra-data-simple-rest";
+import spec from "../openapi.yaml";
 
 export const removeTrailingSlash = (url: string) => {
   if (url.endsWith("/")) {
@@ -8,81 +10,33 @@ export const removeTrailingSlash = (url: string) => {
   return url;
 };
 
-// Based on @api-platform/admin/lib/dataProvider/restDataProvider.js
-export default (
+export default async (
   entrypoint: string,
   httpClient = fetchUtils.fetchJson,
-): DataProvider => {
+): Promise<DataProvider> => {
   const apiUrl = new URL(entrypoint, window.location.href);
+  const normalizedEntrypoint = removeTrailingSlash(apiUrl.toString());
+
+  // We must provide an underlying REST provider to openApiDataProvider.
+  // We use simpleRestProvider which is compatible with our backend's ReactAdminConfig.
+  const baseDataProvider = await openApiDataProvider({
+    entrypoint: normalizedEntrypoint,
+    docEntrypoint: spec,
+    httpClient,
+    dataProvider: simpleRestProvider(normalizedEntrypoint, httpClient),
+  });
+
+  // We decorate the standard provider with our custom icon upload logic and extra methods
   return {
-    getList: async (resource, params) => {
-      const { page, perPage } = params.pagination ?? { page: 1, perPage: 25 };
-      const { field, order } = params.sort ?? { field: "id", order: "DESC" };
-      const rangeStart = (page - 1) * perPage;
-      const rangeEnd = page * perPage - 1;
-      const query = {
-        sort: JSON.stringify([field, order]),
-        range: JSON.stringify([rangeStart, rangeEnd]),
-        filter: JSON.stringify(params.filter),
-      };
-      const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}?${new URLSearchParams(query).toString()}`;
-      const { json } = await httpClient(url);
-      return {
-        data: json,
-        pageInfo: {
-          hasNextPage: true,
-          hasPreviousPage: page > 1,
-        },
-      };
-    },
-    getOne: async (resource, params) => {
-      const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}/${params.id}`;
-      const { json } = await httpClient(url);
-      return {
-        data: json,
-      };
-    },
-    getMany: async (resource, params) => {
-      const query = {
-        filter: JSON.stringify({ id: params.ids }),
-      };
-      const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}?${new URLSearchParams(query).toString()}`;
-      const { json } = await httpClient(url);
-      return {
-        data: json,
-      };
-    },
-    getManyReference: async (resource, params) => {
-      const { page, perPage } = params.pagination;
-      const { field, order } = params.sort;
-      const rangeStart = (page - 1) * perPage;
-      const rangeEnd = page * perPage - 1;
-      const query = {
-        sort: JSON.stringify([field, order]),
-        range: JSON.stringify([rangeStart, rangeEnd]),
-        filter: JSON.stringify({
-          ...params.filter,
-          [params.target]: params.id,
-        }),
-      };
-      const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}?${new URLSearchParams(query).toString()}`;
-      const { json } = await httpClient(url);
-      return {
-        data: json,
-        pageInfo: {
-          hasNextPage: true,
-          hasPreviousPage: page > 1,
-        },
-      };
-    },
+    ...baseDataProvider,
     update: async (resource, params) => {
-      const data = { ...params.data };
       if (resource === "applications") {
+        const data = { ...params.data };
         if (data.icon && data.icon.rawFile instanceof File) {
           const formData = new FormData();
           formData.append("file", data.icon.rawFile);
           const { json: imageJson } = await httpClient(
-            `${removeTrailingSlash(apiUrl.toString())}/images`,
+            `${normalizedEntrypoint}/images`,
             {
               method: "POST",
               body: formData,
@@ -95,58 +49,18 @@ export default (
         delete applicationData.iconUrl;
         delete applicationData.isLinked;
         delete applicationData.createdBy;
+        return baseDataProvider.update(resource, { ...params, data });
       }
-
-      const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}/${params.id}`;
-      const { json } = await httpClient(url, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      });
-      return {
-        data: json,
-      };
-    },
-    updateMany: async (resource, params) => {
-      const responses = await Promise.all(
-        params.ids.map(async (id) => {
-          const data = { ...params.data };
-          if (resource === "applications") {
-            // Normally icon uploads in updateMany are rare, but for completeness:
-            if (data.icon && data.icon.rawFile instanceof File) {
-              const formData = new FormData();
-              formData.append("file", data.icon.rawFile);
-              const { json: imageJson } = await httpClient(
-                `${removeTrailingSlash(apiUrl.toString())}/images`,
-                {
-                  method: "POST",
-                  body: formData,
-                },
-              );
-              data.icon = imageJson.filename;
-            }
-            const applicationData = data as Record<string, unknown>;
-            delete applicationData.id;
-            delete applicationData.iconUrl;
-            delete applicationData.isLinked;
-            delete applicationData.createdBy;
-          }
-          const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}/${id}`;
-          return httpClient(url, {
-            method: "PUT",
-            body: JSON.stringify(data),
-          });
-        }),
-      );
-      return { data: responses.map(({ json }) => json.id) };
+      return baseDataProvider.update(resource, params);
     },
     create: async (resource, params) => {
-      const data = { ...params.data };
       if (resource === "applications") {
+        const data = { ...params.data };
         if (data.icon && data.icon.rawFile instanceof File) {
           const formData = new FormData();
           formData.append("file", data.icon.rawFile);
           const { json: imageJson } = await httpClient(
-            `${removeTrailingSlash(apiUrl.toString())}/images`,
+            `${normalizedEntrypoint}/images`,
             {
               method: "POST",
               body: formData,
@@ -159,46 +73,18 @@ export default (
         delete applicationData.iconUrl;
         delete applicationData.isLinked;
         delete applicationData.createdBy;
+        return baseDataProvider.create(resource, { ...params, data });
       }
-
-      const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}`;
-      const { json } = await httpClient(url, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
-      return {
-        data: json,
-      };
+      return baseDataProvider.create(resource, params);
     },
-    delete: async (resource, params) => {
-      const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}/${params.id}`;
-      const { json } = await httpClient(url, {
-        method: "DELETE",
-      });
-      return {
-        data: json,
-      };
-    },
-    deleteMany: async (resource, params) => {
-      const responses = await Promise.all(
-        params.ids.map((id) => {
-          const url = `${removeTrailingSlash(apiUrl.toString())}/${resource}/${id}`;
-          return httpClient(url, {
-            method: "DELETE",
-          });
-        }),
-      );
-      return {
-        data: responses.map(({ json }) => json.id),
-      };
-    },
+    // Custom non-CRUD methods
     exportData: async () => {
-      const url = `${removeTrailingSlash(apiUrl.toString())}/admin/export`;
+      const url = `${normalizedEntrypoint}/admin/export`;
       const { json } = await httpClient(url);
       return { data: json };
     },
     importData: async (params) => {
-      const url = `${removeTrailingSlash(apiUrl.toString())}/admin/import`;
+      const url = `${normalizedEntrypoint}/admin/import`;
       const { json } = await httpClient(url, {
         method: "POST",
         body: JSON.stringify(params.data),
@@ -206,22 +92,22 @@ export default (
       return { data: json };
     },
     scanRealmClients: async (params) => {
-      const url = `${removeTrailingSlash(apiUrl.toString())}/admin/realms/${params.realm}/clients`;
+      const url = `${normalizedEntrypoint}/admin/realms/${params.realm}/clients`;
       const { json } = await httpClient(url);
       return { data: json };
     },
     listRealms: async () => {
-      const url = `${removeTrailingSlash(apiUrl.toString())}/admin/realms`;
+      const url = `${normalizedEntrypoint}/admin/realms`;
       const { json } = await httpClient(url);
       return { data: json };
     },
     getApplicationRoles: async (id) => {
-      const url = `${removeTrailingSlash(apiUrl.toString())}/applications/${id}/roles`;
+      const url = `${normalizedEntrypoint}/applications/${id}/roles`;
       const { json } = await httpClient(url);
       return { data: json };
     },
     reorderCategories: async (params) => {
-      const url = `${removeTrailingSlash(apiUrl.toString())}/categories/reorder`;
+      const url = `${normalizedEntrypoint}/categories/reorder`;
       const { json } = await httpClient(url, {
         method: "POST",
         body: JSON.stringify(params.data),
@@ -229,12 +115,12 @@ export default (
       return { data: json };
     },
     reorderApplications: async (params) => {
-      const url = `${removeTrailingSlash(apiUrl.toString())}/applications/reorder`;
+      const url = `${normalizedEntrypoint}/applications/reorder`;
       const { json } = await httpClient(url, {
         method: "POST",
         body: JSON.stringify(params.data),
       });
       return { data: json };
     },
-  };
+  } as DataProvider;
 };

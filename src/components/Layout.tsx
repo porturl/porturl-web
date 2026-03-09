@@ -7,6 +7,7 @@ import {
   MenuItemLink,
   Sidebar,
   AppBar,
+  SidebarProps,
 } from "react-admin";
 import { MyMenu } from "./Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -32,14 +33,12 @@ const MyUserMenu = () => {
 
 const MyAppBar = () => <AppBar userMenu={<MyUserMenu />} />;
 
-const MySidebar = (props: any) => <Sidebar {...props} size={240} closedSize={50} />;
+const MySidebar = (props: SidebarProps) => (
+  <Sidebar {...props} size={240} closedSize={50} />
+);
 
 export const Layout = ({ children }: { children: ReactNode }) => (
-  <RALayout
-    menu={MyMenu}
-    appBar={MyAppBar}
-    sidebar={MySidebar}
-  >
+  <RALayout menu={MyMenu} appBar={MyAppBar} sidebar={MySidebar}>
     {children}
     <CheckForApplicationUpdate />
   </RALayout>

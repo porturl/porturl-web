@@ -435,7 +435,6 @@ const SortableCategory = ({
     >
       <Box
         sx={{
-          mb: 3,
           p: 2,
           width: "100%",
           height: "100%",
@@ -859,8 +858,7 @@ const Dashboard = () => {
         >
           <Grid
             container
-            spacing={viewMode === "grid" ? 3 : 0}
-            sx={{ width: "100%", m: 0 }}
+            spacing={3}
           >
             {filteredCategories.map((category) => (
               <SortableCategory

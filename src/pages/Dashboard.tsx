@@ -6,7 +6,7 @@ import {
   useNotify,
   useDelete,
 } from "react-admin";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import {
   Grid,
@@ -17,26 +17,20 @@ import {
   IconButton,
   Avatar,
   Divider,
-  TextField,
-  InputAdornment,
-  Tooltip,
-  Button,
   Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
+  SpeedDial,
+  SpeedDialAction,
+  SpeedDialIcon,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
 import FolderIcon from "@mui/icons-material/Folder";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import GridViewIcon from "@mui/icons-material/GridView";
-
 import {
   DndContext,
   closestCenter,
@@ -62,6 +56,7 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useHeader } from "../components/HeaderContext";
 
 interface Application {
   id: string;
@@ -520,7 +515,6 @@ const SortableCategory = ({
 };
 
 const Dashboard = () => {
-  const [searchQuery, setSearchQuery] = useState("");
   const [localCategories, setLocalCategories] = useState<Category[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeData, setActiveData] = useState<{
@@ -533,15 +527,17 @@ const Dashboard = () => {
     localStorage.getItem("dashboardViewMode") || "grid",
   );
 
-  const handleToggleViewMode = () => {
+  const handleToggleViewMode = useCallback(() => {
     const newMode = viewMode === "grid" ? "list" : "grid";
     setViewMode(newMode);
     localStorage.setItem("dashboardViewMode", newMode);
-  };
+  }, [viewMode]);
 
   const navigate = useNavigate();
   const dataProvider = useDataProvider();
   const notify = useNotify();
+
+  const headerActions = useMemo(() => null, []);
 
   const {
     data: categories,
@@ -551,6 +547,15 @@ const Dashboard = () => {
   } = useGetList<Category>("categories", {
     pagination: { page: 1, perPage: 100 },
     sort: { field: "sortOrder", order: "ASC" },
+  });
+
+  const { searchQuery } = useHeader({
+    title: "Applications",
+    actions: headerActions,
+    showSearch: true,
+    onRefresh: refetch,
+    viewMode: viewMode as "list" | "grid",
+    onToggleViewMode: handleToggleViewMode,
   });
 
   const [lastCategories, setLastCategories] = useState<Category[] | undefined>(
@@ -753,98 +758,7 @@ const Dashboard = () => {
   if (!categories) return null;
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 } }}>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          mb: 4,
-          gap: 2,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: { xs: 1, sm: 3 },
-            flexWrap: "wrap",
-            width: { xs: "100%", sm: "auto" },
-          }}
-        >
-          <Typography
-            variant="h4"
-            sx={{ fontWeight: 500, fontSize: { xs: "1.5rem", sm: "2.125rem" } }}
-          >
-            Applications
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate("/applications/create")}
-              size="small"
-            >
-              Add App
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<FolderIcon />}
-              onClick={() => navigate("/categories/create")}
-              size="small"
-            >
-              Add Category
-            </Button>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            width: { xs: "100%", sm: "auto" },
-          }}
-        >
-          <Tooltip
-            title={
-              viewMode === "grid"
-                ? "Switch to List View"
-                : "Switch to Grid View"
-            }
-          >
-            <IconButton
-              onClick={handleToggleViewMode}
-              color="primary"
-              sx={{ flexShrink: 0 }}
-            >
-              {viewMode === "grid" ? <ViewListIcon /> : <GridViewIcon />}
-            </IconButton>
-          </Tooltip>
-          <TextField
-            size="small"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ flexGrow: 1, width: { sm: 200, md: 300 } }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon color="action" />
-                </InputAdornment>
-              ),
-              endAdornment: searchQuery && (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setSearchQuery("")}>
-                    <ClearIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-      </Box>
-
+    <Box sx={{ p: { xs: 2, md: 4 }, pb: 10 }}>
       {filteredCategories.length === 0 && (
         <Box sx={{ textAlign: "center", mt: 8 }}>
           <Typography variant="h6" color="text.secondary">
@@ -868,10 +782,7 @@ const Dashboard = () => {
               : verticalListSortingStrategy
           }
         >
-          <Grid
-            container
-            spacing={3}
-          >
+          <Grid container spacing={3}>
             {filteredCategories.map((category) => (
               <SortableCategory
                 key={category.id}
@@ -884,20 +795,32 @@ const Dashboard = () => {
           </Grid>
         </SortableContext>
 
-        {activeId && (
-          <DragOverlay
-            dropAnimation={{
-              sideEffects: defaultDropAnimationSideEffects({
-                styles: {
-                  active: {
-                    opacity: "0.5",
-                  },
+        <DragOverlay
+          dropAnimation={{
+            sideEffects: defaultDropAnimationSideEffects({
+              styles: {
+                active: {
+                  opacity: "0.5",
                 },
-              }),
-            }}
-          >
-            {activeId.toString().startsWith("cat-") ? (
-              <Box sx={{ opacity: 0.8, cursor: "grabbing" }}>
+              },
+            }),
+          }}
+        >
+          {activeId ? (
+            activeId.toString().startsWith("cat-") ? (
+              <Box
+                sx={{
+                  opacity: 0.8,
+                  cursor: "grabbing",
+                  bgcolor: "background.paper",
+                  p: 2,
+                  borderRadius: 2,
+                  boxShadow: 10,
+                  border: "1px solid",
+                  borderColor: "primary.main",
+                  minWidth: 300,
+                }}
+              >
                 <Typography
                   variant="h6"
                   sx={{ fontWeight: 600, color: "primary.main" }}
@@ -918,6 +841,7 @@ const Dashboard = () => {
                   display: "flex",
                   alignItems: "center",
                   p: 2,
+                  bgcolor: "background.paper",
                 }}
               >
                 <Avatar
@@ -930,10 +854,29 @@ const Dashboard = () => {
                   {activeData?.app?.name}
                 </Typography>
               </Card>
-            )}
-          </DragOverlay>
-        )}
+            )
+          ) : null}
+        </DragOverlay>
       </DndContext>
+
+      <SpeedDial
+        ariaLabel="Add actions"
+        sx={{ position: "fixed", bottom: 16, right: 16 }}
+        icon={<SpeedDialIcon />}
+      >
+        <SpeedDialAction
+          key="add-app"
+          icon={<AddIcon />}
+          tooltipTitle="Add App"
+          onClick={() => navigate("/applications/create")}
+        />
+        <SpeedDialAction
+          key="add-category"
+          icon={<FolderIcon />}
+          tooltipTitle="Add Category"
+          onClick={() => navigate("/categories/create")}
+        />
+      </SpeedDial>
 
       <Outlet context={{ refetch }} />
     </Box>

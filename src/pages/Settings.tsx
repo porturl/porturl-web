@@ -1,4 +1,4 @@
-import { useDataProvider, useNotify, Title } from "react-admin";
+import { useDataProvider, useNotify } from "react-admin";
 import {
   Box,
   Card,
@@ -12,11 +12,18 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import WarningIcon from "@mui/icons-material/Warning";
 import { useState, ChangeEvent } from "react";
+import { useHeader } from "../components/HeaderContext";
 
 const Settings = () => {
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const [loading, setLoading] = useState(false);
+
+  useHeader({
+    title: "Settings",
+    actions: null,
+    showSearch: false,
+  });
 
   const handleExport = async () => {
     setLoading(true);
@@ -69,11 +76,6 @@ const Settings = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Title title="Settings" />
-      <Typography variant="h4" gutterBottom>
-        Settings
-      </Typography>
-
       <Card sx={{ maxWidth: 600, mb: 4 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>

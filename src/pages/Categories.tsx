@@ -8,14 +8,13 @@ import {
   Create,
   SelectInput,
   required,
-  TopToolbar,
   Button as RAButton,
   Toolbar,
   SaveButton,
   ExportButton,
-  CreateButton,
   useListContext,
   SimpleList,
+  useRefresh,
 } from "react-admin";
 import {
   Box,
@@ -23,20 +22,20 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  Tooltip,
   Grid,
   Card,
   CardActionArea,
   Typography,
   useMediaQuery,
   Theme,
+  Fab,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import GridViewIcon from "@mui/icons-material/GridView";
 import FolderIcon from "@mui/icons-material/Folder";
+import AddIcon from "@mui/icons-material/Add";
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useHeader } from "../components/HeaderContext";
 
 interface Category {
   id: string;
@@ -55,28 +54,6 @@ const MyToolbar = ({ onCancel }: { onCancel: () => void }) => (
     <SaveButton />
     <RAButton label="Cancel" onClick={onCancel} />
   </Toolbar>
-);
-
-const ListActions = ({
-  viewMode,
-  onToggle,
-}: {
-  viewMode: string;
-  onToggle: () => void;
-}) => (
-  <TopToolbar>
-    <Tooltip
-      title={
-        viewMode === "list" ? "Switch to Grid View" : "Switch to List View"
-      }
-    >
-      <IconButton onClick={onToggle} sx={{ flexShrink: 0 }}>
-        {viewMode === "list" ? <GridViewIcon /> : <ViewListIcon />}
-      </IconButton>
-    </Tooltip>
-    <CreateButton />
-    <ExportButton />
-  </TopToolbar>
 );
 
 const CategoryGrid = () => {
@@ -149,39 +126,75 @@ export const CategoryList = () => {
     localStorage.getItem("categoryViewMode") || "list",
   );
 
-  const handleToggle = () => {
+  const handleToggle = useCallback(() => {
     const newMode = viewMode === "list" ? "grid" : "list";
     setViewMode(newMode);
     localStorage.setItem("categoryViewMode", newMode);
-  };
+  }, [viewMode]);
+
+  const headerActions = useMemo(
+    () => (
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <ExportButton
+          resource="categories"
+          sx={{
+            color: "white",
+            "& .MuiSvgIcon-root": { color: "white" },
+          }}
+        />
+      </Box>
+    ),
+    [],
+  );
+
+  const refresh = useRefresh();
+  const { searchQuery } = useHeader({
+    title: "Categories",
+    actions: headerActions,
+    showSearch: true,
+    onRefresh: refresh,
+    viewMode: viewMode as "list" | "grid",
+    onToggleViewMode: handleToggle,
+  });
 
   return (
-    <List
-      sort={{ field: "sortOrder", order: "ASC" }}
-      actions={<ListActions viewMode={viewMode} onToggle={handleToggle} />}
-      sx={{ mt: 2 }}
-    >
-      {viewMode === "list" ? (
-        isSmall ? (
-          <SimpleList
-            primaryText={(record) => record.name}
-            secondaryText={(record) => record.description}
-            tertiaryText={(record) => record.applicationSortMode}
-            linkType="edit"
-            leftIcon={() => <FolderIcon />}
-          />
+    <Box sx={{ pb: 10 }}>
+      <List
+        sort={{ field: "sortOrder", order: "ASC" }}
+        actions={false}
+        filter={searchQuery ? { q: searchQuery } : {}}
+        sx={{ mt: 2 }}
+      >
+        {viewMode === "list" ? (
+          isSmall ? (
+            <SimpleList
+              primaryText={(record) => record.name}
+              secondaryText={(record) => record.description}
+              tertiaryText={(record) => record.applicationSortMode}
+              linkType="edit"
+              leftIcon={() => <FolderIcon />}
+            />
+          ) : (
+            <Datagrid rowClick="edit">
+              <TextField source="name" />
+              <TextField source="sortOrder" />
+              <TextField source="applicationSortMode" />
+              <TextField source="description" />
+            </Datagrid>
+          )
         ) : (
-          <Datagrid rowClick="edit">
-            <TextField source="name" />
-            <TextField source="sortOrder" />
-            <TextField source="applicationSortMode" />
-            <TextField source="description" />
-          </Datagrid>
-        )
-      ) : (
-        <CategoryGrid />
-      )}
-    </List>
+          <CategoryGrid />
+        )}
+      </List>
+      <Fab
+        color="primary"
+        aria-label="add"
+        sx={{ position: "fixed", bottom: 16, right: 16 }}
+        onClick={() => navigate("/categories/create")}
+      >
+        <AddIcon />
+      </Fab>
+    </Box>
   );
 };
 

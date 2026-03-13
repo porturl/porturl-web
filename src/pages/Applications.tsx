@@ -16,11 +16,10 @@ import {
   Toolbar,
   AutocompleteInput,
   useDataProvider,
-  TopToolbar,
   ExportButton,
-  CreateButton,
   useListContext,
   SimpleList,
+  useRefresh,
 } from "react-admin";
 import {
   Avatar,
@@ -39,16 +38,16 @@ import {
   Tooltip,
   useMediaQuery,
   Theme,
+  Fab,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import GridViewIcon from "@mui/icons-material/GridView";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useFormContext, useWatch } from "react-hook-form";
 import ImageEditor from "../components/ImageEditor";
+import { useHeader } from "../components/HeaderContext";
 
 interface Application {
   id: string;
@@ -246,28 +245,6 @@ const KeycloakFields = () => {
   );
 };
 
-const ListActions = ({
-  viewMode,
-  onToggle,
-}: {
-  viewMode: string;
-  onToggle: () => void;
-}) => (
-  <TopToolbar>
-    <Tooltip
-      title={
-        viewMode === "list" ? "Switch to Grid View" : "Switch to List View"
-      }
-    >
-      <IconButton onClick={onToggle} sx={{ flexShrink: 0 }}>
-        {viewMode === "list" ? <GridViewIcon /> : <ViewListIcon />}
-      </IconButton>
-    </Tooltip>
-    <CreateButton />
-    <ExportButton />
-  </TopToolbar>
-);
-
 const ApplicationGrid = () => {
   const { data, isLoading } = useListContext<Application>();
   const navigate = useNavigate();
@@ -390,43 +367,83 @@ export const ApplicationList = () => {
     localStorage.getItem("applicationViewMode") || "list",
   );
 
-  const handleToggle = () => {
+  const handleToggle = useCallback(() => {
     const newMode = viewMode === "list" ? "grid" : "list";
     setViewMode(newMode);
     localStorage.setItem("applicationViewMode", newMode);
-  };
+  }, [viewMode]);
+
+  const headerActions = useMemo(
+    () => (
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <ExportButton
+          resource="applications"
+          sx={{
+            color: "white",
+            "& .MuiSvgIcon-root": { color: "white" },
+          }}
+        />
+      </Box>
+    ),
+    [],
+  );
+
+  const refresh = useRefresh();
+  const { searchQuery } = useHeader({
+    title: "Applications",
+    actions: headerActions,
+    showSearch: true,
+    onRefresh: refresh,
+    viewMode: viewMode as "list" | "grid",
+    onToggleViewMode: handleToggle,
+  });
 
   return (
-    <List
-      actions={<ListActions viewMode={viewMode} onToggle={handleToggle} />}
-      sx={{ mt: 2 }}
-    >
-      {viewMode === "list" ? (
-        isSmall ? (
-          <SimpleList
-            primaryText={(record) => record.name}
-            secondaryText={(record) => record.url}
-            tertiaryText={(record) => record.realm}
-            linkType="edit"
-            leftAvatar={(record) => (
-              <Avatar src={record.iconUrl} alt={record.name}>
-                {record.name?.[0]}
-              </Avatar>
-            )}
-          />
+    <Box sx={{ pb: 10 }}>
+      <List
+        actions={false}
+        filter={searchQuery ? { q: searchQuery } : {}}
+        sx={{ mt: 2 }}
+      >
+        {viewMode === "list" ? (
+          isSmall ? (
+            <SimpleList
+              primaryText={(record) => record.name}
+              secondaryText={(record) => record.url}
+              tertiaryText={(record) => record.realm}
+              linkType="edit"
+              leftAvatar={(record) => (
+                <Avatar src={record.iconUrl} alt={record.name}>
+                  {record.name?.[0]}
+                </Avatar>
+              )}
+            />
+          ) : (
+            <Datagrid rowClick="edit">
+              <AvatarField source="iconUrl" />
+              <TextField source="name" />
+              <UrlField
+                source="url"
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+              <TextField source="clientId" />
+              <TextField source="realm" />
+            </Datagrid>
+          )
         ) : (
-          <Datagrid rowClick="edit">
-            <AvatarField source="iconUrl" />
-            <TextField source="name" />
-            <UrlField source="url" target="_blank" rel="noopener noreferrer" />
-            <TextField source="clientId" />
-            <TextField source="realm" />
-          </Datagrid>
-        )
-      ) : (
-        <ApplicationGrid />
-      )}
-    </List>
+          <ApplicationGrid />
+        )}
+      </List>
+      <Fab
+        color="primary"
+        aria-label="add"
+        sx={{ position: "fixed", bottom: 16, right: 16 }}
+        onClick={() => navigate("/applications/create")}
+      >
+        <AddIcon />
+      </Fab>
+    </Box>
   );
 };
 

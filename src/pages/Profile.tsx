@@ -1,4 +1,4 @@
-import { useGetIdentity, Loading, Error, Title } from "react-admin";
+import { useGetIdentity, Loading, Error, useLogout } from "react-admin";
 import {
   Box,
   Card,
@@ -7,21 +7,26 @@ import {
   Avatar,
   Divider,
   Chip,
+  Button,
 } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { useHeader } from "../components/HeaderContext";
 
 const Profile = () => {
   const { data: identity, isLoading, error } = useGetIdentity();
+  const logout = useLogout();
+
+  useHeader({
+    title: "User Profile",
+    actions: null,
+    showSearch: false,
+  });
 
   if (isLoading) return <Loading />;
   if (error) return <Error />;
 
   return (
     <Box sx={{ p: 3 }}>
-      <Title title="User Profile" />
-      <Typography variant="h4" gutterBottom>
-        User Profile
-      </Typography>
-
       <Card sx={{ maxWidth: 600 }}>
         <CardContent
           sx={{
@@ -47,16 +52,24 @@ const Profile = () => {
 
           <Divider sx={{ width: "100%", my: 3 }} />
 
-          <Box sx={{ width: "100%" }}>
+          <Box sx={{ width: "100%", mb: 3 }}>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Roles
             </Typography>
-            {/* Roles are usually in the token, identity might not have them if not mapped in App.tsx */}
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
               <Chip label="USER" variant="outlined" />
-              {/* Add logic to show actual roles if available */}
             </Box>
           </Box>
+
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<LogoutIcon />}
+            onClick={() => logout()}
+            fullWidth
+          >
+            Logout
+          </Button>
         </CardContent>
       </Card>
     </Box>

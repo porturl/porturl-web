@@ -12,10 +12,14 @@ import {
   TopToolbar,
   Button as RAButton,
   SimpleList,
+  useRefresh,
 } from "react-admin";
-import { Avatar, useMediaQuery, Theme } from "@mui/material";
+import { Avatar, useMediaQuery, Theme, Box, Fab } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
+import { useHeader } from "../components/HeaderContext";
+import { useMemo } from "react";
 
 interface User {
   id: string;
@@ -57,29 +61,40 @@ const AvatarField = ({ source }: { source: string }) => {
 
 export const UserList = () => {
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
+  const headerActions = useMemo(() => null, []);
+
+  const refresh = useRefresh();
+  const { searchQuery } = useHeader({
+    title: "Users",
+    actions: headerActions,
+    showSearch: false,
+  });
+
   return (
-    <List>
-      {isSmall ? (
-        <SimpleList
-          primaryText={(record) => record.email}
-          secondaryText={(record) => record.id}
-          tertiaryText={(record) => record.providerUserId}
-          linkType="edit"
-          leftAvatar={(record) => (
-            <Avatar src={record.avatarUrl} alt={record.email}>
-              {record.email?.[0]}
-            </Avatar>
-          )}
-        />
-      ) : (
-        <Datagrid rowClick="edit">
-          <TextField source="id" />
-          <AvatarField source="avatarUrl" />
-          <EmailField source="email" />
-          <TextField source="providerUserId" />
-        </Datagrid>
-      )}
-    </List>
+    <Box sx={{ pb: 10 }}>
+      <List actions={false} filter={searchQuery ? { q: searchQuery } : {}}>
+        {isSmall ? (
+          <SimpleList
+            primaryText={(record) => record.email}
+            secondaryText={(record) => record.id}
+            tertiaryText={(record) => record.providerUserId}
+            linkType="edit"
+            leftAvatar={(record) => (
+              <Avatar src={record.avatarUrl} alt={record.email}>
+                {record.email?.[0]}
+              </Avatar>
+            )}
+          />
+        ) : (
+          <Datagrid rowClick="edit">
+            <TextField source="id" />
+            <AvatarField source="avatarUrl" />
+            <EmailField source="email" />
+            <TextField source="providerUserId" />
+          </Datagrid>
+        )}
+      </List>
+    </Box>
   );
 };
 

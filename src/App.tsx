@@ -137,11 +137,29 @@ export const App = () => {
     ...defaultTheme,
     components: {
       ...defaultTheme.components,
+      MuiCssBaseline: {
+        styleOverrides: {
+          html: {
+            overflowY: "scroll", // Force scrollbar track to prevent jumping
+          },
+        },
+      },
       RaSidebar: {
         styleOverrides: {
           root: {
             "& .RaSidebar-fixed": {
               backgroundColor: "#f5f5f5",
+            },
+          },
+        },
+      },
+      RaAppBar: {
+        styleOverrides: {
+          root: {
+            "& .MuiToolbar-root": {
+              minHeight: 48,
+              height: 48,
+              padding: "0 16px",
             },
           },
         },
@@ -159,6 +177,13 @@ export const App = () => {
           },
         },
       },
+      RaLoadingIndicator: {
+        styleOverrides: {
+          root: {
+            display: "none",
+          },
+        },
+      },
     },
   };
 
@@ -169,6 +194,7 @@ export const App = () => {
       layout={Layout}
       theme={theme}
       disableTelemetry={true}
+      title=""
     >
       <Resource name="applications" list={ApplicationList} />
       <Resource name="categories" list={CategoryList} />
@@ -176,7 +202,6 @@ export const App = () => {
         name="users"
         list={UserList}
         edit={UserEdit}
-        create={UserCreate}
       />
       <CustomRoutes>
         <Route path="/" element={<Dashboard />}>

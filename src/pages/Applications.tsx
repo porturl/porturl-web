@@ -361,8 +361,18 @@ const ApplicationGrid = () => {
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ display: "block", mt: 0.5 }}
+                sx={{
+                  display: "block",
+                  mt: 0.5,
+                  textDecoration: "none",
+                  "&:hover": { textDecoration: "underline" },
+                }}
                 noWrap
+                component="a"
+                href={record.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
               >
                 {record.url ? new URL(record.url).hostname : ""}
               </Typography>
@@ -408,7 +418,7 @@ export const ApplicationList = () => {
           <Datagrid rowClick="edit">
             <AvatarField source="iconUrl" />
             <TextField source="name" />
-            <UrlField source="url" />
+            <UrlField source="url" target="_blank" rel="noopener noreferrer" />
             <TextField source="clientId" />
             <TextField source="realm" />
           </Datagrid>

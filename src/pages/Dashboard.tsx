@@ -79,7 +79,6 @@ interface Category {
 const ListViewItem = ({
   app,
   handleMenuOpen,
-  handleCardClick,
   attributes,
   listeners,
 }: {
@@ -93,6 +92,10 @@ const ListViewItem = ({
     variant="outlined"
     {...attributes}
     {...listeners}
+    component="a"
+    href={app.url}
+    target="_blank"
+    rel="noopener noreferrer"
     sx={{
       mb: 0.5,
       display: "flex",
@@ -101,12 +104,13 @@ const ListViewItem = ({
       borderRadius: 1,
       cursor: "pointer",
       width: "100%",
+      textDecoration: "none",
+      color: "inherit",
       "&:hover": {
         borderColor: "primary.main",
         boxShadow: "0 2px 8px 0 rgba(0,0,0,0.05)",
       },
     }}
-    onClick={handleCardClick}
   >
     <Box sx={{ display: "flex", alignItems: "center", p: 1, width: "100%" }}>
       <Avatar
@@ -146,7 +150,10 @@ const ListViewItem = ({
           {app.url ? new URL(app.url).hostname : ""}
         </Typography>
       </Box>
-      <Box onPointerDown={(e) => e.stopPropagation()}>
+      <Box
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.preventDefault()}
+      >
         <IconButton size="small" onClick={handleMenuOpen}>
           <MoreVertIcon fontSize="small" />
         </IconButton>
@@ -195,22 +202,28 @@ const SortableApplication = ({
 
   const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
+    e.preventDefault();
     setAnchorEl(e.currentTarget);
   };
 
   const handleMenuClose = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     setAnchorEl(null);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     handleMenuClose();
     navigate(`/applications/${app.id}`);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     handleMenuClose();
     if (window.confirm("Are you sure you want to delete this application?")) {
       deleteOne(
@@ -225,12 +238,6 @@ const SortableApplication = ({
             notify(`Error: ${error.message}`, { type: "error" }),
         },
       );
-    }
-  };
-
-  const handleCardClick = () => {
-    if (app.url) {
-      window.open(app.url, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -266,7 +273,10 @@ const SortableApplication = ({
             <CardActionArea
               {...attributes}
               {...listeners}
-              onClick={handleCardClick}
+              component="a"
+              href={app.url}
+              target="_blank"
+              rel="noopener noreferrer"
               sx={{
                 p: 2,
                 display: "flex",
@@ -311,7 +321,7 @@ const SortableApplication = ({
         <ListViewItem
           app={app}
           handleMenuOpen={handleMenuOpen}
-          handleCardClick={handleCardClick}
+          handleCardClick={() => {}}
           attributes={attributes}
           listeners={listeners}
         />

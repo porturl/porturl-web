@@ -40,8 +40,9 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import {
   DndContext,
   closestCenter,
+  MouseSensor,
+  TouchSensor,
   KeyboardSensor,
-  PointerSensor,
   useSensor,
   useSensors,
   DragOverlay,
@@ -561,9 +562,15 @@ const Dashboard = () => {
   }
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -750,10 +757,10 @@ const Dashboard = () => {
       <Box
         sx={{
           display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: { xs: "flex-start", sm: "center" },
           mb: 4,
-          flexWrap: "wrap",
           gap: 2,
         }}
       >
@@ -763,6 +770,7 @@ const Dashboard = () => {
             alignItems: "center",
             gap: { xs: 1, sm: 3 },
             flexWrap: "wrap",
+            width: { xs: "100%", sm: "auto" },
           }}
         >
           <Typography
@@ -805,7 +813,11 @@ const Dashboard = () => {
                 : "Switch to Grid View"
             }
           >
-            <IconButton onClick={handleToggleViewMode} color="primary">
+            <IconButton
+              onClick={handleToggleViewMode}
+              color="primary"
+              sx={{ flexShrink: 0 }}
+            >
               {viewMode === "grid" ? <ViewListIcon /> : <GridViewIcon />}
             </IconButton>
           </Tooltip>
@@ -814,7 +826,7 @@ const Dashboard = () => {
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ width: { xs: "100%", sm: 200, md: 300 } }}
+            sx={{ flexGrow: 1, width: { sm: 200, md: 300 } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -872,19 +884,19 @@ const Dashboard = () => {
           </Grid>
         </SortableContext>
 
-        <DragOverlay
-          dropAnimation={{
-            sideEffects: defaultDropAnimationSideEffects({
-              styles: {
-                active: {
-                  opacity: "0.5",
+        {activeId && (
+          <DragOverlay
+            dropAnimation={{
+              sideEffects: defaultDropAnimationSideEffects({
+                styles: {
+                  active: {
+                    opacity: "0.5",
+                  },
                 },
-              },
-            }),
-          }}
-        >
-          {activeId ? (
-            activeId.toString().startsWith("cat-") ? (
+              }),
+            }}
+          >
+            {activeId.toString().startsWith("cat-") ? (
               <Box sx={{ opacity: 0.8, cursor: "grabbing" }}>
                 <Typography
                   variant="h6"
@@ -918,9 +930,9 @@ const Dashboard = () => {
                   {activeData?.app?.name}
                 </Typography>
               </Card>
-            )
-          ) : null}
-        </DragOverlay>
+            )}
+          </DragOverlay>
+        )}
       </DndContext>
 
       <Outlet context={{ refetch }} />

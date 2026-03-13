@@ -259,7 +259,7 @@ const ListActions = ({
         viewMode === "list" ? "Switch to Grid View" : "Switch to List View"
       }
     >
-      <IconButton onClick={onToggle}>
+      <IconButton onClick={onToggle} sx={{ flexShrink: 0 }}>
         {viewMode === "list" ? <GridViewIcon /> : <ViewListIcon />}
       </IconButton>
     </Tooltip>

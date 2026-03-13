@@ -244,11 +244,11 @@ const SortableApplication = ({
   return (
     <Grid
       size={{
-        xs: 12,
-        sm: viewMode === "grid" ? 6 : 12,
+        xs: 6,
+        sm: 4,
         md: viewMode === "grid" ? 4 : 12,
-        lg: viewMode === "grid" ? 3 : 12,
-        xl: viewMode === "grid" ? 2 : 12,
+        lg: viewMode === "grid" ? 4 : 12,
+        xl: viewMode === "grid" ? 3 : 12,
       }}
       ref={setNodeRef}
       style={style}
@@ -278,7 +278,7 @@ const SortableApplication = ({
               target="_blank"
               rel="noopener noreferrer"
               sx={{
-                p: 2,
+                p: 1.5,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -302,7 +302,7 @@ const SortableApplication = ({
               </Avatar>
               <Typography
                 variant="subtitle2"
-                sx={{ fontWeight: 600, lineHeight: 1.2 }}
+                sx={{ fontWeight: 600, lineHeight: 1.2, width: "100%" }}
                 noWrap
               >
                 {app.name}
@@ -426,9 +426,9 @@ const SortableCategory = ({
       size={{
         xs: 12,
         sm: 12,
-        md: viewMode === "grid" ? 6 : 6,
-        lg: viewMode === "grid" ? 4 : 6,
-        xl: viewMode === "grid" ? 3 : 6,
+        md: viewMode === "grid" ? 12 : 6,
+        lg: viewMode === "grid" ? 6 : 6,
+        xl: viewMode === "grid" ? 4 : 6,
       }}
       ref={setNodeRef}
       style={style}

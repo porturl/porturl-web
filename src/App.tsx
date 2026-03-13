@@ -19,7 +19,7 @@ import {
   ApplicationCreate,
 } from "./pages/Applications";
 import { CategoryList, CategoryEdit, CategoryCreate } from "./pages/Categories";
-import { UserList, UserEdit, UserCreate } from "./pages/Users";
+import { UserList, UserEdit } from "./pages/Users";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 
@@ -198,11 +198,7 @@ export const App = () => {
     >
       <Resource name="applications" list={ApplicationList} />
       <Resource name="categories" list={CategoryList} />
-      <Resource
-        name="users"
-        list={UserList}
-        edit={UserEdit}
-      />
+      <Resource name="users" list={UserList} edit={UserEdit} />
       <CustomRoutes>
         <Route path="/" element={<Dashboard />}>
           <Route path="applications/create" element={<ApplicationCreate />} />

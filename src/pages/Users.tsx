@@ -12,11 +12,9 @@ import {
   TopToolbar,
   Button as RAButton,
   SimpleList,
-  useRefresh,
 } from "react-admin";
-import { Avatar, useMediaQuery, Theme, Box, Fab } from "@mui/material";
+import { Avatar, useMediaQuery, Theme, Box } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 import { useHeader } from "../components/HeaderContext";
 import { useMemo } from "react";
@@ -63,7 +61,6 @@ export const UserList = () => {
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
   const headerActions = useMemo(() => null, []);
 
-  const refresh = useRefresh();
   const { searchQuery } = useHeader({
     title: "Users",
     actions: headerActions,

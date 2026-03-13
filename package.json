@@ -35,7 +35,7 @@
     "react-router-dom": "^7.13.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^10.0.1",
     "@modyfi/vite-plugin-yaml": "^1.1.1",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.3.5",

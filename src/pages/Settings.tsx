@@ -1,7 +1,6 @@
 import {
   useDataProvider,
   useNotify,
-  useLocale,
   useSetLocale,
   useTranslate,
 } from "react-admin";
@@ -34,7 +33,6 @@ import {
 const Settings = () => {
   const dataProvider = useDataProvider();
   const notify = useNotify();
-  const currentLocale = useLocale();
   const setLocale = useSetLocale();
   const translate = useTranslate();
   const [loading, setLoading] = useState(false);

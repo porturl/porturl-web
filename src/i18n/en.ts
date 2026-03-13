@@ -51,11 +51,11 @@ export const en = {
     users: "Users",
   },
   custom: {
-    language: 'Language',
-    system: 'System',
-    en: 'English',
-    de: 'Deutsch',
-    export: 'Export',
+    language: "Language",
+    system: "System",
+    en: "English",
+    de: "Deutsch",
+    export: "Export",
     import: "Import",
     admin_operations: "Admin Operations",
     export_description:

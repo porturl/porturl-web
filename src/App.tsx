@@ -142,7 +142,11 @@ export const App = () => {
       MuiCssBaseline: {
         styleOverrides: {
           html: {
-            overflowY: "scroll", // Force scrollbar track to prevent jumping
+            overflowY: "scroll",
+          },
+          ".MuiModal-root[aria-hidden='true']": {
+            display: "none !important",
+            pointerEvents: "none !important",
           },
         },
       },

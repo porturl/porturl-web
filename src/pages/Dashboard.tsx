@@ -244,8 +244,8 @@ const SortableApplication = ({
   return (
     <Grid
       size={{
-        xs: 6,
-        sm: 4,
+        xs: viewMode === "grid" ? 6 : 12,
+        sm: viewMode === "grid" ? 4 : 12,
         md: viewMode === "grid" ? 4 : 12,
         lg: viewMode === "grid" ? 4 : 12,
         xl: viewMode === "grid" ? 3 : 12,

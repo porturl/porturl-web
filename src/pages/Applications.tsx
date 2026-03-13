@@ -20,6 +20,7 @@ import {
   useListContext,
   SimpleList,
   useRefresh,
+  useTranslate,
 } from "react-admin";
 import {
   Avatar,
@@ -61,7 +62,13 @@ interface Application {
 }
 
 const ApplicationTitle = ({ record }: { record?: Application }) => {
-  return <span>Application {record ? `"${record.name}"` : ""}</span>;
+  const translate = useTranslate();
+  return (
+    <span>
+      {translate("resources.applications.name", { smart_count: 1 })}{" "}
+      {record ? `"${record.name}"` : ""}
+    </span>
+  );
 };
 
 const AvatarField = ({ source }: { source: string }) => {
@@ -82,6 +89,7 @@ const RolesFields = ({ isLinked }: { isLinked: boolean }) => {
   const { setValue } = useFormContext();
   const record = useRecordContext<Application>();
   const dataProvider = useDataProvider();
+  const translate = useTranslate();
   const availableRoles = useWatch({ name: "availableRoles" }) || [];
   const [newRole, setNewRole] = useState("");
 
@@ -116,7 +124,7 @@ const RolesFields = ({ isLinked }: { isLinked: boolean }) => {
         gutterBottom
         color={isLinked ? "textPrimary" : "textSecondary"}
       >
-        Application Roles
+        {translate("custom.application_roles")}
       </Typography>
       {!isLinked && (
         <Typography
@@ -125,13 +133,13 @@ const RolesFields = ({ isLinked }: { isLinked: boolean }) => {
           display="block"
           sx={{ mb: 1 }}
         >
-          Roles are only supported for linked applications.
+          {translate("custom.roles_unsupported")}
         </Typography>
       )}
       <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
         <MuiTextField
           size="small"
-          label="New Role"
+          label={translate("custom.new_role")}
           value={newRole}
           onChange={(e) => setNewRole(e.target.value)}
           disabled={!isLinked}
@@ -143,7 +151,7 @@ const RolesFields = ({ isLinked }: { isLinked: boolean }) => {
           disabled={!isLinked || !newRole}
           startIcon={<AddIcon />}
         >
-          Add
+          {translate("custom.add")}
         </Button>
       </Box>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -162,6 +170,7 @@ const RolesFields = ({ isLinked }: { isLinked: boolean }) => {
 
 const KeycloakFields = () => {
   const dataProvider = useDataProvider();
+  const translate = useTranslate();
   const { setValue } = useFormContext();
   const realm = useWatch({ name: "realm" });
   const clientId = useWatch({ name: "clientId" });
@@ -213,15 +222,19 @@ const KeycloakFields = () => {
         borderRadius: 1,
       }}
     >
-      <Box sx={{ typography: "subtitle2", mb: 2 }}>Keycloak Configuration</Box>
+      <Box sx={{ typography: "subtitle2", mb: 2 }}>
+        {translate("custom.keycloak_config")}
+      </Box>
       <AutocompleteInput
         source="realm"
+        label={translate("resources.applications.fields.realm")}
         choices={realms}
         fullWidth
         isLoading={isLoadingRealms}
       />
       <AutocompleteInput
         source="clientId"
+        label={translate("resources.applications.fields.clientId")}
         choices={clients}
         fullWidth
         disabled={!realm}
@@ -229,7 +242,9 @@ const KeycloakFields = () => {
         onChange={handleClientChange}
       />
       <Box sx={{ display: "flex", alignItems: "center", mt: 1, mb: 2 }}>
-        <Box sx={{ typography: "body2", mr: 1 }}>Link Status:</Box>
+        <Box sx={{ typography: "body2", mr: 1 }}>
+          {translate("custom.link_status")}:
+        </Box>
         <Box
           sx={{
             typography: "body2",
@@ -237,7 +252,9 @@ const KeycloakFields = () => {
             color: isLinked ? "success.main" : "error.main",
           }}
         >
-          {isLinked ? "Linked" : "Not Linked"}
+          {isLinked
+            ? translate("custom.linked")
+            : translate("custom.not_linked")}
         </Box>
       </Box>
       <RolesFields isLinked={!!isLinked} />
@@ -248,6 +265,7 @@ const KeycloakFields = () => {
 const ApplicationGrid = () => {
   const { data, isLoading } = useListContext<Application>();
   const navigate = useNavigate();
+  const translate = useTranslate();
 
   if (isLoading) return null;
 
@@ -300,7 +318,7 @@ const ApplicationGrid = () => {
                   {record.name?.[0]}
                 </Avatar>
                 {(record.realm || record.clientId) && (
-                  <Tooltip title="Linked to Keycloak">
+                  <Tooltip title={translate("custom.linked_to_keycloak")}>
                     <Box
                       sx={{
                         position: "absolute",
@@ -389,8 +407,9 @@ export const ApplicationList = () => {
   );
 
   const refresh = useRefresh();
+  const translate = useTranslate();
   const { searchQuery } = useHeader({
-    title: "Applications",
+    title: translate("pages.applications"),
     actions: headerActions,
     showSearch: true,
     onRefresh: refresh,
@@ -420,15 +439,28 @@ export const ApplicationList = () => {
             />
           ) : (
             <Datagrid rowClick="edit">
-              <AvatarField source="iconUrl" />
-              <TextField source="name" />
+              <AvatarField
+                source="iconUrl"
+                label={translate("resources.applications.fields.iconUrl")}
+              />
+              <TextField
+                source="name"
+                label={translate("resources.applications.fields.name")}
+              />
               <UrlField
                 source="url"
+                label={translate("resources.applications.fields.url")}
                 target="_blank"
                 rel="noopener noreferrer"
               />
-              <TextField source="clientId" />
-              <TextField source="realm" />
+              <TextField
+                source="clientId"
+                label={translate("resources.applications.fields.clientId")}
+              />
+              <TextField
+                source="realm"
+                label={translate("resources.applications.fields.realm")}
+              />
             </Datagrid>
           )
         ) : (
@@ -437,7 +469,7 @@ export const ApplicationList = () => {
       </List>
       <Fab
         color="primary"
-        aria-label="add"
+        aria-label={translate("custom.create_application")}
         sx={{ position: "fixed", bottom: 16, right: 16 }}
         onClick={() => navigate("/applications/create")}
       >
@@ -447,15 +479,19 @@ export const ApplicationList = () => {
   );
 };
 
-const MyToolbar = ({ onCancel }: { onCancel: () => void }) => (
-  <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-    <SaveButton />
-    <RAButton label="Cancel" onClick={onCancel} />
-  </Toolbar>
-);
+const MyToolbar = ({ onCancel }: { onCancel: () => void }) => {
+  const translate = useTranslate();
+  return (
+    <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+      <SaveButton />
+      <RAButton label={translate("custom.cancel")} onClick={onCancel} />
+    </Toolbar>
+  );
+};
 
 export const ApplicationEdit = () => {
   const navigate = useNavigate();
+  const translate = useTranslate();
   const { id } = useParams();
   const { refetch } = useOutletContext<{ refetch: () => void }>();
   const handleClose = () => {
@@ -497,17 +533,31 @@ export const ApplicationEdit = () => {
           })}
         >
           <SimpleForm toolbar={<MyToolbar onCancel={handleClose} />}>
-            <TextInput source="name" validate={required()} fullWidth />
+            <TextInput
+              source="name"
+              label={translate("resources.applications.fields.name")}
+              validate={required()}
+              fullWidth
+            />
             <TextInput
               source="url"
+              label={translate("resources.applications.fields.url")}
               validate={required()}
               type="url"
               fullWidth
             />
-            <ImageEditor source="icon" label="Icon" />
+            <ImageEditor
+              source="icon"
+              label={translate("resources.applications.fields.iconUrl")}
+            />
             <KeycloakFields />
-            <ReferenceArrayInput source="categories" reference="categories">
+            <ReferenceArrayInput
+              source="categories"
+              reference="categories"
+              label={translate("resources.applications.fields.categories")}
+            >
               <SelectArrayInput
+                label={translate("resources.applications.fields.categories")}
                 optionText="name"
                 fullWidth
                 format={(value: (string | { id: string })[]) =>
@@ -524,6 +574,7 @@ export const ApplicationEdit = () => {
 
 export const ApplicationCreate = () => {
   const navigate = useNavigate();
+  const translate = useTranslate();
   const { refetch } = useOutletContext<{ refetch: () => void }>();
   const handleClose = () => {
     refetch();
@@ -541,7 +592,7 @@ export const ApplicationCreate = () => {
           alignItems: "center",
         }}
       >
-        <span>Create Application</span>
+        <span>{translate("custom.create_application")}</span>
         <IconButton onClick={handleClose}>
           <CloseIcon />
         </IconButton>
@@ -563,17 +614,34 @@ export const ApplicationCreate = () => {
           })}
         >
           <SimpleForm toolbar={<MyToolbar onCancel={handleClose} />}>
-            <TextInput source="name" validate={required()} fullWidth />
+            <TextInput
+              source="name"
+              label={translate("resources.applications.fields.name")}
+              validate={required()}
+              fullWidth
+            />
             <TextInput
               source="url"
+              label={translate("resources.applications.fields.url")}
               validate={required()}
               type="url"
               fullWidth
             />
-            <ImageEditor source="icon" label="Icon" />
+            <ImageEditor
+              source="icon"
+              label={translate("resources.applications.fields.iconUrl")}
+            />
             <KeycloakFields />
-            <ReferenceArrayInput source="categories" reference="categories">
-              <SelectArrayInput optionText="name" fullWidth />
+            <ReferenceArrayInput
+              source="categories"
+              reference="categories"
+              label={translate("resources.applications.fields.categories")}
+            >
+              <SelectArrayInput
+                label={translate("resources.applications.fields.categories")}
+                optionText="name"
+                fullWidth
+              />
             </ReferenceArrayInput>
           </SimpleForm>
         </Create>

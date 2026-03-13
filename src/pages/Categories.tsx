@@ -7,6 +7,7 @@ import {
   TextInput,
   Create,
   SelectInput,
+  SelectField,
   required,
   Button as RAButton,
   Toolbar,
@@ -15,6 +16,7 @@ import {
   useListContext,
   SimpleList,
   useRefresh,
+  useTranslate,
 } from "react-admin";
 import {
   Box,
@@ -46,19 +48,29 @@ interface Category {
 }
 
 const CategoryTitle = ({ record }: { record?: Category }) => {
-  return <span>Category {record ? `"${record.name}"` : ""}</span>;
+  const translate = useTranslate();
+  return (
+    <span>
+      {translate("resources.categories.name", { smart_count: 1 })}{" "}
+      {record ? `"${record.name}"` : ""}
+    </span>
+  );
 };
 
-const MyToolbar = ({ onCancel }: { onCancel: () => void }) => (
-  <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-    <SaveButton />
-    <RAButton label="Cancel" onClick={onCancel} />
-  </Toolbar>
-);
+const MyToolbar = ({ onCancel }: { onCancel: () => void }) => {
+  const translate = useTranslate();
+  return (
+    <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+      <SaveButton />
+      <RAButton label={translate("custom.cancel")} onClick={onCancel} />
+    </Toolbar>
+  );
+};
 
 const CategoryGrid = () => {
   const { data, isLoading } = useListContext<Category>();
   const navigate = useNavigate();
+  const translate = useTranslate();
 
   if (isLoading) return null;
 
@@ -109,7 +121,10 @@ const CategoryGrid = () => {
                   color="text.secondary"
                   sx={{ mt: 0.5, display: "block" }}
                 >
-                  Order: {record.sortOrder} | {record.applicationSortMode}
+                  {translate("custom.order")}: {record.sortOrder} |{" "}
+                  {record.applicationSortMode === "ALPHABETICAL"
+                    ? translate("custom.alphabetical")
+                    : translate("custom.custom")}
                 </Typography>
               </Box>
             </CardActionArea>
@@ -148,8 +163,9 @@ export const CategoryList = () => {
   );
 
   const refresh = useRefresh();
+  const translate = useTranslate();
   const { searchQuery } = useHeader({
-    title: "Categories",
+    title: translate("pages.categories"),
     actions: headerActions,
     showSearch: true,
     onRefresh: refresh,
@@ -170,16 +186,41 @@ export const CategoryList = () => {
             <SimpleList
               primaryText={(record) => record.name}
               secondaryText={(record) => record.description}
-              tertiaryText={(record) => record.applicationSortMode}
+              tertiaryText={(record) =>
+                record.applicationSortMode === "ALPHABETICAL"
+                  ? translate("custom.alphabetical")
+                  : translate("custom.custom")
+              }
               linkType="edit"
               leftIcon={() => <FolderIcon />}
             />
           ) : (
             <Datagrid rowClick="edit">
-              <TextField source="name" />
-              <TextField source="sortOrder" />
-              <TextField source="applicationSortMode" />
-              <TextField source="description" />
+              <TextField
+                source="name"
+                label={translate("resources.categories.fields.name")}
+              />
+              <TextField
+                source="sortOrder"
+                label={translate("resources.categories.fields.sortOrder")}
+              />
+              <SelectField
+                source="applicationSortMode"
+                label={translate(
+                  "resources.categories.fields.applicationSortMode",
+                )}
+                choices={[
+                  {
+                    id: "ALPHABETICAL",
+                    name: translate("custom.alphabetical"),
+                  },
+                  { id: "CUSTOM", name: translate("custom.custom") },
+                ]}
+              />
+              <TextField
+                source="description"
+                label={translate("resources.categories.fields.description")}
+              />
             </Datagrid>
           )
         ) : (
@@ -188,7 +229,7 @@ export const CategoryList = () => {
       </List>
       <Fab
         color="primary"
-        aria-label="add"
+        aria-label={translate("custom.create_category")}
         sx={{ position: "fixed", bottom: 16, right: 16 }}
         onClick={() => navigate("/categories/create")}
       >
@@ -200,6 +241,7 @@ export const CategoryList = () => {
 
 export const CategoryEdit = () => {
   const navigate = useNavigate();
+  const translate = useTranslate();
   const { id } = useParams();
   const handleClose = () => navigate("/");
 
@@ -229,17 +271,30 @@ export const CategoryEdit = () => {
           sx={{ "& .RaEdit-main": { mt: 0 } }}
         >
           <SimpleForm toolbar={<MyToolbar onCancel={handleClose} />}>
-            <TextInput source="name" validate={required()} fullWidth />
+            <TextInput
+              source="name"
+              label={translate("resources.categories.fields.name")}
+              validate={required()}
+              fullWidth
+            />
             <SelectInput
               source="applicationSortMode"
+              label={translate(
+                "resources.categories.fields.applicationSortMode",
+              )}
               choices={[
-                { id: "ALPHABETICAL", name: "Alphabetical" },
-                { id: "CUSTOM", name: "Custom" },
+                { id: "ALPHABETICAL", name: translate("custom.alphabetical") },
+                { id: "CUSTOM", name: translate("custom.custom") },
               ]}
               defaultValue="ALPHABETICAL"
               fullWidth
             />
-            <TextInput source="description" multiline fullWidth />
+            <TextInput
+              source="description"
+              label={translate("resources.categories.fields.description")}
+              multiline
+              fullWidth
+            />
           </SimpleForm>
         </Edit>
       </DialogContent>
@@ -249,6 +304,7 @@ export const CategoryEdit = () => {
 
 export const CategoryCreate = () => {
   const navigate = useNavigate();
+  const translate = useTranslate();
   const handleClose = () => navigate("/");
 
   return (
@@ -262,7 +318,7 @@ export const CategoryCreate = () => {
           alignItems: "center",
         }}
       >
-        <span>Create Category</span>
+        <span>{translate("custom.create_category")}</span>
         <IconButton onClick={handleClose}>
           <CloseIcon />
         </IconButton>
@@ -276,17 +332,30 @@ export const CategoryCreate = () => {
           sx={{ "& .RaCreate-main": { mt: 0 } }}
         >
           <SimpleForm toolbar={<MyToolbar onCancel={handleClose} />}>
-            <TextInput source="name" validate={required()} fullWidth />
+            <TextInput
+              source="name"
+              label={translate("resources.categories.fields.name")}
+              validate={required()}
+              fullWidth
+            />
             <SelectInput
               source="applicationSortMode"
+              label={translate(
+                "resources.categories.fields.applicationSortMode",
+              )}
               choices={[
-                { id: "ALPHABETICAL", name: "Alphabetical" },
-                { id: "CUSTOM", name: "Custom" },
+                { id: "ALPHABETICAL", name: translate("custom.alphabetical") },
+                { id: "CUSTOM", name: translate("custom.custom") },
               ]}
               defaultValue="ALPHABETICAL"
               fullWidth
             />
-            <TextInput source="description" multiline fullWidth />
+            <TextInput
+              source="description"
+              label={translate("resources.categories.fields.description")}
+              multiline
+              fullWidth
+            />
           </SimpleForm>
         </Create>
       </DialogContent>

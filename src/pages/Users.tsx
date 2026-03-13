@@ -12,6 +12,7 @@ import {
   TopToolbar,
   Button as RAButton,
   SimpleList,
+  useTranslate,
 } from "react-admin";
 import { Avatar, useMediaQuery, Theme, Box } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -27,15 +28,22 @@ interface User {
 }
 
 const UserTitle = ({ record }: { record?: User }) => {
-  return <span>User {record ? `"${record.email}"` : ""}</span>;
+  const translate = useTranslate();
+  return (
+    <span>
+      {translate("resources.users.name", { smart_count: 1 })}{" "}
+      {record ? `"${record.email}"` : ""}
+    </span>
+  );
 };
 
 const EditActions = () => {
   const navigate = useNavigate();
+  const translate = useTranslate();
   return (
     <TopToolbar>
       <RAButton
-        label="Back"
+        label={translate("custom.back")}
         onClick={() => navigate(-1)}
         startIcon={<ArrowBackIcon />}
       />
@@ -59,10 +67,11 @@ const AvatarField = ({ source }: { source: string }) => {
 
 export const UserList = () => {
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
+  const translate = useTranslate();
   const headerActions = useMemo(() => null, []);
 
   const { searchQuery } = useHeader({
-    title: "Users",
+    title: translate("pages.users"),
     actions: headerActions,
     showSearch: false,
   });
@@ -84,10 +93,22 @@ export const UserList = () => {
           />
         ) : (
           <Datagrid rowClick="edit">
-            <TextField source="id" />
-            <AvatarField source="avatarUrl" />
-            <EmailField source="email" />
-            <TextField source="providerUserId" />
+            <TextField
+              source="id"
+              label={translate("resources.users.fields.id")}
+            />
+            <AvatarField
+              source="avatarUrl"
+              label={translate("resources.users.fields.avatarUrl")}
+            />
+            <EmailField
+              source="email"
+              label={translate("resources.users.fields.email")}
+            />
+            <TextField
+              source="providerUserId"
+              label={translate("resources.users.fields.providerUserId")}
+            />
           </Datagrid>
         )}
       </List>
@@ -95,21 +116,47 @@ export const UserList = () => {
   );
 };
 
-export const UserEdit = () => (
-  <Edit title={<UserTitle />} actions={<EditActions />}>
-    <SimpleForm>
-      <TextInput source="id" disabled />
-      <TextInput source="email" validate={required()} />
-      <TextInput source="providerUserId" disabled />
-    </SimpleForm>
-  </Edit>
-);
+export const UserEdit = () => {
+  const translate = useTranslate();
+  return (
+    <Edit title={<UserTitle />} actions={<EditActions />}>
+      <SimpleForm>
+        <TextInput
+          source="id"
+          label={translate("resources.users.fields.id")}
+          disabled
+        />
+        <TextInput
+          source="email"
+          label={translate("resources.users.fields.email")}
+          validate={required()}
+        />
+        <TextInput
+          source="providerUserId"
+          label={translate("resources.users.fields.providerUserId")}
+          disabled
+        />
+      </SimpleForm>
+    </Edit>
+  );
+};
 
-export const UserCreate = () => (
-  <Create actions={<EditActions />}>
-    <SimpleForm>
-      <TextInput source="email" validate={required()} />
-      <TextInput source="providerUserId" validate={required()} />
-    </SimpleForm>
-  </Create>
-);
+export const UserCreate = () => {
+  const translate = useTranslate();
+  return (
+    <Create actions={<EditActions />}>
+      <SimpleForm>
+        <TextInput
+          source="email"
+          label={translate("resources.users.fields.email")}
+          validate={required()}
+        />
+        <TextInput
+          source="providerUserId"
+          label={translate("resources.users.fields.providerUserId")}
+          validate={required()}
+        />
+      </SimpleForm>
+    </Create>
+  );
+};

@@ -23,6 +23,8 @@ import { UserList, UserEdit } from "./pages/Users";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 
+import { i18nProvider } from "./i18n";
+
 export const App = () => {
   const auth = useAuth();
 
@@ -191,10 +193,11 @@ export const App = () => {
     <Admin
       authProvider={authProvider}
       dataProvider={dataProvider}
+      i18nProvider={i18nProvider}
       layout={Layout}
       theme={theme}
       disableTelemetry={true}
-      title=""
+      title="PortURL"
     >
       <Resource name="applications" list={ApplicationList} />
       <Resource name="categories" list={CategoryList} />

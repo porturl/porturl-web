@@ -5,6 +5,7 @@ import {
   useDataProvider,
   useNotify,
   useDelete,
+  useTranslate,
 } from "react-admin";
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
@@ -171,6 +172,7 @@ const SortableApplication = ({
 }) => {
   const navigate = useNavigate();
   const notify = useNotify();
+  const translate = useTranslate();
   const [deleteOne] = useDelete();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -221,13 +223,13 @@ const SortableApplication = ({
     e.stopPropagation();
     e.preventDefault();
     handleMenuClose();
-    if (window.confirm("Are you sure you want to delete this application?")) {
+    if (window.confirm(translate("custom.delete_application_confirm"))) {
       deleteOne(
         "applications",
         { id: app.id, previousData: app },
         {
           onSuccess: () => {
-            notify("Application deleted", { type: "info" });
+            notify(translate("custom.application_deleted"), { type: "info" });
             refetch();
           },
           onError: (error: Error) =>
@@ -332,13 +334,13 @@ const SortableApplication = ({
           <ListItemIcon>
             <EditIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
+          <ListItemText>{translate("custom.edit")}</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
           <ListItemIcon>
             <DeleteIcon fontSize="small" color="error" />
           </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
+          <ListItemText>{translate("custom.delete")}</ListItemText>
         </MenuItem>
       </Menu>
     </Grid>
@@ -357,6 +359,7 @@ const SortableCategory = ({
   viewMode: string;
 }) => {
   const notify = useNotify();
+  const translate = useTranslate();
   const [deleteOne] = useDelete();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -401,13 +404,13 @@ const SortableCategory = ({
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     handleMenuClose();
-    if (window.confirm("Are you sure you want to delete this category?")) {
+    if (window.confirm(translate("custom.delete_category_confirm"))) {
       deleteOne(
         "categories",
         { id: category.id, previousData: category },
         {
           onSuccess: () => {
-            notify("Category deleted", { type: "info" });
+            notify(translate("custom.category_deleted"), { type: "info" });
             refetch();
           },
           onError: (error: Error) =>
@@ -474,13 +477,13 @@ const SortableCategory = ({
               <ListItemIcon>
                 <EditIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText>Edit</ListItemText>
+              <ListItemText>{translate("custom.edit")}</ListItemText>
             </MenuItem>
             <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
               <ListItemIcon>
                 <DeleteIcon fontSize="small" color="error" />
               </ListItemIcon>
-              <ListItemText>Delete</ListItemText>
+              <ListItemText>{translate("custom.delete")}</ListItemText>
             </MenuItem>
           </Menu>
         </Box>
@@ -536,6 +539,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const dataProvider = useDataProvider();
   const notify = useNotify();
+  const translate = useTranslate();
 
   const headerActions = useMemo(() => null, []);
 
@@ -550,7 +554,7 @@ const Dashboard = () => {
   });
 
   const { searchQuery } = useHeader({
-    title: "Applications",
+    title: translate("pages.applications"),
     actions: headerActions,
     showSearch: true,
     onRefresh: refetch,
@@ -860,20 +864,20 @@ const Dashboard = () => {
       </DndContext>
 
       <SpeedDial
-        ariaLabel="Add actions"
+        ariaLabel={translate("custom.add_actions")}
         sx={{ position: "fixed", bottom: 16, right: 16 }}
         icon={<SpeedDialIcon />}
       >
         <SpeedDialAction
           key="add-app"
           icon={<AddIcon />}
-          tooltipTitle="Add App"
+          tooltipTitle={translate("custom.create_application")}
           onClick={() => navigate("/applications/create")}
         />
         <SpeedDialAction
           key="add-category"
           icon={<FolderIcon />}
-          tooltipTitle="Add Category"
+          tooltipTitle={translate("custom.create_category")}
           onClick={() => navigate("/categories/create")}
         />
       </SpeedDial>

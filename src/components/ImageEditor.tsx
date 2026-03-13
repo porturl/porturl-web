@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useInput, useRecordContext } from "react-admin";
+import { useInput, useRecordContext, useTranslate } from "react-admin";
 import {
   Box,
   Typography,
@@ -55,6 +55,7 @@ const getCroppedImg = async (
 
 const ImageEditor = ({ source, label }: { source: string; label?: string }) => {
   const record = useRecordContext();
+  const translate = useTranslate();
   const {
     field: { value, onChange },
   } = useInput({ source });
@@ -159,7 +160,7 @@ const ImageEditor = ({ source, label }: { source: string; label?: string }) => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Edit Icon</DialogTitle>
+        <DialogTitle>{translate("custom.edit_icon")}</DialogTitle>
         <DialogContent sx={{ height: 400, position: "relative", p: 0 }}>
           {imageSrc && (
             <Cropper
@@ -179,7 +180,9 @@ const ImageEditor = ({ source, label }: { source: string; label?: string }) => {
           sx={{ flexDirection: "column", alignItems: "stretch", px: 3, pb: 3 }}
         >
           <Box sx={{ px: 2, pb: 2 }}>
-            <Typography variant="caption">Zoom</Typography>
+            <Typography variant="caption">
+              {translate("custom.zoom")}
+            </Typography>
             <Slider
               value={zoom}
               min={1}
@@ -189,9 +192,11 @@ const ImageEditor = ({ source, label }: { source: string; label?: string }) => {
             />
           </Box>
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-            <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setIsDialogOpen(false)}>
+              {translate("custom.cancel")}
+            </Button>
             <Button variant="contained" onClick={handleSaveCrop}>
-              Apply
+              {translate("custom.apply")}
             </Button>
           </Box>
         </DialogActions>

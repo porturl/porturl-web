@@ -1,4 +1,4 @@
-import { Menu, useGetIdentity } from "react-admin";
+import { Menu, useGetIdentity, useTranslate } from "react-admin";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -6,6 +6,7 @@ import { Avatar, Box } from "@mui/material";
 
 export const MyMenu = () => {
   const { data: identity } = useGetIdentity();
+  const translate = useTranslate();
 
   return (
     <Menu
@@ -16,13 +17,17 @@ export const MyMenu = () => {
       }}
     >
       <Menu.DashboardItem
-        primaryText="Dashboard"
+        primaryText={translate("pages.applications")}
         leftIcon={<DashboardIcon />}
       />
-      <Menu.Item to="/users" primaryText="Users" leftIcon={<PeopleIcon />} />
+      <Menu.Item
+        to="/users"
+        primaryText={translate("pages.users")}
+        leftIcon={<PeopleIcon />}
+      />
       <Menu.Item
         to="/settings"
-        primaryText="Settings"
+        primaryText={translate("pages.settings")}
         leftIcon={<SettingsIcon />}
       />
 
@@ -30,7 +35,7 @@ export const MyMenu = () => {
 
       <Menu.Item
         to="/profile"
-        primaryText={identity?.fullName || "Profile"}
+        primaryText={identity?.fullName || translate("pages.profile")}
         leftIcon={
           <Avatar
             src={identity?.avatar}

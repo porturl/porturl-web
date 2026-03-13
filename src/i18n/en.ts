@@ -1,0 +1,96 @@
+import englishMessages from "ra-language-english";
+
+export const en = {
+  ...englishMessages,
+  ra: {
+    ...englishMessages.ra,
+    action: {
+      ...englishMessages.ra.action,
+      show_grid: "Show as grid",
+      show_list: "Show as list",
+    },
+  },
+  resources: {
+    applications: {
+      name: "Application |||| Applications",
+      fields: {
+        name: "Name",
+        url: "URL",
+        iconUrl: "Icon",
+        clientId: "Client ID",
+        realm: "Realm",
+        categories: "Categories",
+        availableRoles: "Available Roles",
+      },
+    },
+    categories: {
+      name: "Category |||| Categories",
+      fields: {
+        name: "Name",
+        description: "Description",
+        sortOrder: "Sort Order",
+        applicationSortMode: "Sort Mode",
+      },
+    },
+    users: {
+      name: "User |||| Users",
+      fields: {
+        id: "ID",
+        email: "Email",
+        avatarUrl: "Avatar",
+        providerUserId: "Provider User ID",
+      },
+    },
+  },
+  pages: {
+    dashboard: "Dashboard",
+    profile: "Profile",
+    settings: "Settings",
+    applications: "Applications",
+    categories: "Categories",
+    users: "Users",
+  },
+  custom: {
+    language: 'Language',
+    system: 'System',
+    en: 'English',
+    de: 'Deutsch',
+    export: 'Export',
+    import: "Import",
+    admin_operations: "Admin Operations",
+    export_description:
+      "Download all applications and categories as a JSON file.",
+    import_description:
+      "Importing data will overwrite existing applications and categories.",
+    keycloak_config: "Keycloak Configuration",
+    link_status: "Link Status",
+    linked: "Linked",
+    not_linked: "Not Linked",
+    application_roles: "Application Roles",
+    new_role: "New Role",
+    add: "Add",
+    roles_unsupported: "Roles are only supported for linked applications.",
+    cancel: "Cancel",
+    create_application: "Create Application",
+    create_category: "Create Category",
+    back: "Back",
+    order: "Order",
+    alphabetical: "Alphabetical",
+    custom: "Custom",
+    zoom: "Zoom",
+    apply: "Apply",
+    edit_icon: "Edit Icon",
+    linked_to_keycloak: "Linked to Keycloak",
+    edit: "Edit",
+    delete: "Delete",
+    delete_application_confirm:
+      "Are you sure you want to delete this application?",
+    delete_category_confirm: "Are you sure you want to delete this category?",
+    application_deleted: "Application deleted",
+    category_deleted: "Category deleted",
+    add_actions: "Add actions",
+    user_profile: "User Profile",
+    roles: "Roles",
+    logout: "Logout",
+  },
+};

@@ -1,4 +1,10 @@
-import { useGetIdentity, Loading, Error, useLogout } from "react-admin";
+import {
+  useGetIdentity,
+  Loading,
+  Error,
+  useLogout,
+  useTranslate,
+} from "react-admin";
 import {
   Box,
   Card,
@@ -15,9 +21,10 @@ import { useHeader } from "../components/HeaderContext";
 const Profile = () => {
   const { data: identity, isLoading, error } = useGetIdentity();
   const logout = useLogout();
+  const translate = useTranslate();
 
   useHeader({
-    title: "User Profile",
+    title: translate("custom.user_profile"),
     actions: null,
     showSearch: false,
   });
@@ -54,7 +61,7 @@ const Profile = () => {
 
           <Box sx={{ width: "100%", mb: 3 }}>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Roles
+              {translate("custom.roles")}
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
               <Chip label="USER" variant="outlined" />
@@ -68,7 +75,7 @@ const Profile = () => {
             onClick={() => logout()}
             fullWidth
           >
-            Logout
+            {translate("custom.logout")}
           </Button>
         </CardContent>
       </Card>

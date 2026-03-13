@@ -5,6 +5,7 @@ import {
   Sidebar,
   AppBar,
   SidebarProps,
+  useTranslate,
 } from "react-admin";
 import { MyMenu } from "./Menu";
 import SearchIcon from "@mui/icons-material/Search";
@@ -14,7 +15,6 @@ import ViewListIcon from "@mui/icons-material/ViewList";
 import GridViewIcon from "@mui/icons-material/GridView";
 import {
   Box,
-  Typography,
   TextField,
   InputAdornment,
   IconButton,
@@ -23,8 +23,8 @@ import {
 import { HeaderProvider, useHeader } from "./HeaderContext";
 
 const MyAppBarContent = () => {
+  const translate = useTranslate();
   const {
-    title,
     actions,
     searchQuery,
     setSearchQuery,
@@ -45,21 +45,6 @@ const MyAppBarContent = () => {
         height: 48, // Fixed height
       }}
     >
-      <Typography
-        variant="h6"
-        color="inherit"
-        sx={{
-          flexShrink: 0, // Prevent title from shrinking
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          maxWidth: { xs: 80, sm: 200, md: 300 }, // Cap width to save space
-          display: "block",
-        }}
-      >
-        {title}
-      </Typography>
-
       <Box
         sx={{
           display: "flex",
@@ -74,7 +59,7 @@ const MyAppBarContent = () => {
           <TextField
             size="small"
             variant="outlined"
-            placeholder="Search..."
+            placeholder={translate("ra.action.search") + "..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             sx={{
@@ -122,7 +107,7 @@ const MyAppBarContent = () => {
                       <ClearIcon sx={{ fontSize: 16 }} />
                     </IconButton>
                     {onRefresh && (
-                      <Tooltip title="Refresh">
+                      <Tooltip title={translate("ra.action.refresh")}>
                         <IconButton
                           size="small"
                           onClick={onRefresh}
@@ -136,8 +121,8 @@ const MyAppBarContent = () => {
                       <Tooltip
                         title={
                           viewMode === "list"
-                            ? "Switch to Grid View"
-                            : "Switch to List View"
+                            ? translate("ra.action.show_grid")
+                            : translate("ra.action.show_list")
                         }
                       >
                         <IconButton
@@ -170,7 +155,7 @@ const MyAppBarContent = () => {
 };
 
 const MyAppBar = () => (
-  <AppBar userMenu={false}>
+  <AppBar userMenu={false} toolbar={<></>}>
     <MyAppBarContent />
   </AppBar>
 );

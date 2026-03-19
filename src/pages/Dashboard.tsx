@@ -536,6 +536,21 @@ const Dashboard = () => {
     localStorage.setItem("dashboardViewMode", newMode);
   }, [viewMode]);
 
+  const [speedDialOpen, setSpeedDialOpen] = useState(false);
+
+  const handleSpeedDialOpen = (
+    _event: React.SyntheticEvent,
+    reason: string,
+  ) => {
+    if (reason === "toggle") {
+      setSpeedDialOpen(true);
+    }
+  };
+
+  const handleSpeedDialClose = () => {
+    setSpeedDialOpen(false);
+  };
+
   const navigate = useNavigate();
   const dataProvider = useDataProvider();
   const notify = useNotify();
@@ -867,6 +882,9 @@ const Dashboard = () => {
         ariaLabel={translate("custom.add_actions")}
         sx={{ position: "fixed", bottom: 16, right: 16 }}
         icon={<SpeedDialIcon />}
+        open={speedDialOpen}
+        onOpen={handleSpeedDialOpen}
+        onClose={handleSpeedDialClose}
       >
         <SpeedDialAction
           key="add-app"

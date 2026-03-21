@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     sourcemap: mode === "development",
+    minify: "oxc",
   },
   base: "./",
 }));

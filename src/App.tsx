@@ -19,11 +19,12 @@ import {
   ApplicationCreate,
 } from "./pages/Applications";
 import { CategoryList, CategoryEdit, CategoryCreate } from "./pages/Categories";
-import { UserList, UserEdit } from "./pages/Users";
+import { UserList, UserEdit, UserCreate } from "./pages/Users";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 
 import { i18nProvider } from "./i18n";
+import { createTheme } from "@mui/material/styles";
 
 export const App = () => {
   const auth = useAuth();
@@ -135,7 +136,7 @@ export const App = () => {
 
   if (!dataProvider) return null;
 
-  const theme = {
+  const theme = createTheme({
     ...defaultTheme,
     components: {
       ...defaultTheme.components,
@@ -191,7 +192,7 @@ export const App = () => {
         },
       },
     },
-  };
+  });
 
   return (
     <Admin
@@ -205,7 +206,12 @@ export const App = () => {
     >
       <Resource name="applications" list={ApplicationList} />
       <Resource name="categories" list={CategoryList} />
-      <Resource name="users" list={UserList} edit={UserEdit} />
+      <Resource
+        name="users"
+        list={UserList}
+        edit={UserEdit}
+        create={UserCreate}
+      />
       <CustomRoutes>
         <Route path="/" element={<Dashboard />}>
           <Route path="applications/create" element={<ApplicationCreate />} />

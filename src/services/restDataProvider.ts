@@ -106,6 +106,11 @@ export default async (
       const { json } = await httpClient(url);
       return { data: json };
     },
+    findAllCategories: async () => {
+      const url = `${normalizedEntrypoint}/categories`;
+      const { json } = await httpClient(url);
+      return { data: json };
+    },
     reorderCategories: async (params) => {
       const url = `${normalizedEntrypoint}/categories/reorder`;
       const { json } = await httpClient(url, {
@@ -114,12 +119,25 @@ export default async (
       });
       return { data: json };
     },
-    reorderApplications: async (params) => {
-      const url = `${normalizedEntrypoint}/applications/reorder`;
+    reorderApplicationsInCategory: async (id, applicationIds) => {
+      const url = `${normalizedEntrypoint}/categories/${id}/applications/reorder`;
       const { json } = await httpClient(url, {
         method: "POST",
-        body: JSON.stringify(params.data),
+        body: JSON.stringify(applicationIds),
       });
+      return { data: json };
+    },
+    moveApplication: async (id, params) => {
+      const url = `${normalizedEntrypoint}/applications/${id}/move`;
+      const { json } = await httpClient(url, {
+        method: "POST",
+        body: JSON.stringify(params),
+      });
+      return { data: json };
+    },
+    findApplicationsByCategory: async (id) => {
+      const url = `${normalizedEntrypoint}/categories/${id}/applications`;
+      const { json } = await httpClient(url);
       return { data: json };
     },
   } as DataProvider;

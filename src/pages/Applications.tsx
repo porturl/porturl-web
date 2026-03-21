@@ -7,7 +7,7 @@ import {
   TextInput,
   Create,
   ReferenceArrayInput,
-  SelectArrayInput,
+  AutocompleteArrayInput,
   UrlField,
   required,
   useRecordContext,
@@ -50,6 +50,11 @@ import { useFormContext, useWatch } from "react-hook-form";
 import ImageEditor from "../components/ImageEditor";
 import { useHeader } from "../components/HeaderContext";
 
+interface Category {
+  id: string;
+  name?: string;
+}
+
 interface Application {
   id: string;
   name?: string;
@@ -61,8 +66,9 @@ interface Application {
   categories?: { id: string; name?: string }[];
 }
 
-const ApplicationTitle = ({ record }: { record?: Application }) => {
+const ApplicationTitle = () => {
   const translate = useTranslate();
+  const record = useRecordContext<Application>();
   return (
     <span>
       {translate("resources.applications.name", { smart_count: 1 })}{" "}
@@ -421,7 +427,7 @@ export const ApplicationList = () => {
     <Box sx={{ pb: 10 }}>
       <List
         actions={false}
-        filter={searchQuery ? { q: searchQuery } : {}}
+        filter={searchQuery ? { filter: searchQuery } : {}}
         sx={{ mt: 2 }}
       >
         {viewMode === "list" ? (
@@ -489,49 +495,88 @@ const MyToolbar = ({ onCancel }: { onCancel: () => void }) => {
   );
 };
 
+const categoriesFormat = (value: (string | { id: string })[]) =>
+  Array.isArray(value) ? value.map((v) => (typeof v === "object" ? v.id : v)) : [];
+
+const categoriesParse = (value: string[]) =>
+  Array.isArray(value) ? value.map((v) => ({ id: v })) : [];
+
+const transformEdit = (data: Application) => ({
+  ...data,
+  categories: data.categories?.map((id: string | { id: string }) =>
+    typeof id === "object" ? id : { id },
+  ),
+  availableRoles: data.availableRoles,
+});
+
+const transformCreate = (data: Application) => ({
+  ...data,
+  categories: data.categories?.map((id: string | { id: string }) =>
+    typeof id === "object" ? id : { id },
+  ),
+  roles: data.availableRoles,
+});
+
 export const ApplicationEdit = () => {
   const navigate = useNavigate();
   const translate = useTranslate();
+  const dataProvider = useDataProvider();
   const { id } = useParams();
-  const { refetch } = useOutletContext<{ refetch: () => void }>();
-  const handleClose = () => {
-    refetch();
+  const { refetch } =
+    useOutletContext<{
+      refetch: (
+        appId?: string,
+        categoryIds?: string[],
+        categoryId?: string,
+        newName?: string,
+      ) => void;
+    }>();
+
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => dataProvider.findAllCategories().then((r) => r.data),
+  });
+
+  const handleClose = useCallback(() => {
     navigate("/");
-  };
+  }, [navigate]);
+
+  const handleSuccess = useCallback(
+    (data: any) => {
+      const newCategoryIds = data.categories?.map((c: any) => c.id) || [];
+      refetch(data.id, newCategoryIds);
+      handleClose();
+    },
+    [refetch, handleClose],
+  );
 
   return (
     <Dialog open={true} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle
-        sx={{
-          m: 0,
-          p: 2,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
+      <Edit
+        id={id}
+        resource="applications"
+        mutationOptions={{ onSuccess: handleSuccess }}
+        mutationMode="pessimistic"
+        actions={false}
+        component="div"
+        sx={{ "& .RaEdit-main": { mt: 0 } }}
+        transform={transformEdit}
       >
-        <ApplicationTitle />
-        <IconButton onClick={handleClose}>
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent>
-        <Edit
-          id={id}
-          resource="applications"
-          mutationOptions={{ onSuccess: handleClose }}
-          mutationMode="pessimistic"
-          actions={false}
-          component="div"
-          sx={{ "& .RaEdit-main": { mt: 0 } }}
-          transform={(data: Application) => ({
-            ...data,
-            categories: data.categories?.map((id: string | { id: string }) =>
-              typeof id === "object" ? id : { id },
-            ),
-            availableRoles: data.availableRoles,
-          })}
+        <DialogTitle
+          sx={{
+            m: 0,
+            p: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
         >
+          <ApplicationTitle />
+          <IconButton onClick={handleClose}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
           <SimpleForm toolbar={<MyToolbar onCancel={handleClose} />}>
             <TextInput
               source="name"
@@ -551,23 +596,19 @@ export const ApplicationEdit = () => {
               label={translate("resources.applications.fields.iconUrl")}
             />
             <KeycloakFields />
-            <ReferenceArrayInput
+            <AutocompleteArrayInput
               source="categories"
-              reference="categories"
+              choices={categories}
+              isLoading={isLoadingCategories}
               label={translate("resources.applications.fields.categories")}
-            >
-              <SelectArrayInput
-                label={translate("resources.applications.fields.categories")}
-                optionText="name"
-                fullWidth
-                format={(value: (string | { id: string })[]) =>
-                  value?.map((v) => (typeof v === "object" ? v.id : v))
-                }
-              />
-            </ReferenceArrayInput>
+              optionText="name"
+              fullWidth
+              format={categoriesFormat}
+              parse={categoriesParse}
+            />
           </SimpleForm>
-        </Edit>
-      </DialogContent>
+        </DialogContent>
+      </Edit>
     </Dialog>
   );
 };
@@ -575,11 +616,34 @@ export const ApplicationEdit = () => {
 export const ApplicationCreate = () => {
   const navigate = useNavigate();
   const translate = useTranslate();
-  const { refetch } = useOutletContext<{ refetch: () => void }>();
-  const handleClose = () => {
-    refetch();
+  const dataProvider = useDataProvider();
+  const { refetch } =
+    useOutletContext<{
+      refetch: (
+        appId?: string,
+        categoryIds?: string[],
+        categoryId?: string,
+        newName?: string,
+      ) => void;
+    }>();
+
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => dataProvider.findAllCategories().then((r) => r.data),
+  });
+
+  const handleClose = useCallback(() => {
     navigate("/");
-  };
+  }, [navigate]);
+
+  const handleSuccess = useCallback(
+    (data: any) => {
+      const newCategoryIds = data.categories?.map((c: any) => c.id) || [];
+      refetch(data.id, newCategoryIds);
+      handleClose();
+    },
+    [refetch, handleClose],
+  );
 
   return (
     <Dialog open={true} onClose={handleClose} fullWidth maxWidth="sm">
@@ -600,18 +664,12 @@ export const ApplicationCreate = () => {
       <DialogContent>
         <Create
           resource="applications"
-          mutationOptions={{ onSuccess: handleClose }}
+          mutationOptions={{ onSuccess: handleSuccess }}
           mutationMode="pessimistic"
           actions={false}
           component="div"
           sx={{ "& .RaCreate-main": { mt: 0 } }}
-          transform={(data: Application) => ({
-            ...data,
-            categories: data.categories?.map((id: string | { id: string }) =>
-              typeof id === "object" ? id : { id },
-            ),
-            roles: data.availableRoles,
-          })}
+          transform={transformCreate}
         >
           <SimpleForm toolbar={<MyToolbar onCancel={handleClose} />}>
             <TextInput
@@ -632,17 +690,16 @@ export const ApplicationCreate = () => {
               label={translate("resources.applications.fields.iconUrl")}
             />
             <KeycloakFields />
-            <ReferenceArrayInput
+            <AutocompleteArrayInput
               source="categories"
-              reference="categories"
+              choices={categories}
+              isLoading={isLoadingCategories}
               label={translate("resources.applications.fields.categories")}
-            >
-              <SelectArrayInput
-                label={translate("resources.applications.fields.categories")}
-                optionText="name"
-                fullWidth
-              />
-            </ReferenceArrayInput>
+              optionText="name"
+              fullWidth
+              format={categoriesFormat}
+              parse={categoriesParse}
+            />
           </SimpleForm>
         </Create>
       </DialogContent>

@@ -35,7 +35,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import FolderIcon from "@mui/icons-material/Folder";
 import AddIcon from "@mui/icons-material/Add";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import { useState, useMemo, useCallback } from "react";
 import { useHeader } from "../components/HeaderContext";
 
@@ -178,7 +178,7 @@ export const CategoryList = () => {
       <List
         sort={{ field: "sortOrder", order: "ASC" }}
         actions={false}
-        filter={searchQuery ? { q: searchQuery } : {}}
+        filter={searchQuery ? { filter: searchQuery } : {}}
         sx={{ mt: 2 }}
       >
         {viewMode === "list" ? (
@@ -243,7 +243,27 @@ export const CategoryEdit = () => {
   const navigate = useNavigate();
   const translate = useTranslate();
   const { id } = useParams();
-  const handleClose = () => navigate("/");
+  const { refetch } =
+    useOutletContext<{
+      refetch: (
+        appId?: string,
+        categoryIds?: string[],
+        categoryId?: string,
+        newName?: string,
+      ) => void;
+    }>();
+
+  const handleClose = useCallback(() => {
+    navigate("/");
+  }, [navigate]);
+
+  const handleSuccess = useCallback(
+    (data: any) => {
+      refetch(undefined, undefined, data.id, data.name);
+      handleClose();
+    },
+    [refetch, handleClose],
+  );
 
   return (
     <Dialog open={true} onClose={handleClose} fullWidth maxWidth="sm">
@@ -265,7 +285,8 @@ export const CategoryEdit = () => {
         <Edit
           id={id}
           resource="categories"
-          mutationOptions={{ onSuccess: handleClose }}
+          mutationOptions={{ onSuccess: handleSuccess }}
+          mutationMode="pessimistic"
           actions={false}
           component="div"
           sx={{ "& .RaEdit-main": { mt: 0 } }}
@@ -305,7 +326,24 @@ export const CategoryEdit = () => {
 export const CategoryCreate = () => {
   const navigate = useNavigate();
   const translate = useTranslate();
-  const handleClose = () => navigate("/");
+  const { refetch } =
+    useOutletContext<{
+      refetch: (
+        appId?: string,
+        categoryIds?: string[],
+        categoryId?: string,
+        newName?: string,
+      ) => void;
+    }>();
+
+  const handleClose = useCallback(() => {
+    navigate("/");
+  }, [navigate]);
+
+  const handleSuccess = useCallback(() => {
+    refetch(); // Full refresh for new category
+    handleClose();
+  }, [refetch, handleClose]);
 
   return (
     <Dialog open={true} onClose={handleClose} fullWidth maxWidth="sm">
@@ -326,7 +364,8 @@ export const CategoryCreate = () => {
       <DialogContent>
         <Create
           resource="categories"
-          mutationOptions={{ onSuccess: handleClose }}
+          mutationOptions={{ onSuccess: handleSuccess }}
+          mutationMode="pessimistic"
           actions={false}
           component="div"
           sx={{ "& .RaCreate-main": { mt: 0 } }}

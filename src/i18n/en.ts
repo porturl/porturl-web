@@ -36,6 +36,7 @@ export const en = {
       name: "User |||| Users",
       fields: {
         id: "ID",
+        username: "Username",
         email: "Email",
         avatarUrl: "Avatar",
         providerUserId: "Provider User ID",
@@ -73,6 +74,7 @@ export const en = {
     cancel: "Cancel",
     create_application: "Create Application",
     create_category: "Create Category",
+    create_user: "Create User",
     back: "Back",
     order: "Order",
     alphabetical: "Alphabetical",

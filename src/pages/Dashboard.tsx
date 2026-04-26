@@ -6,8 +6,10 @@ import {
   useNotify,
   useDelete,
   useTranslate,
+  useRefresh,
 } from "react-admin";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, Outlet } from "react-router-dom";
 import {
   Grid,
@@ -25,6 +27,7 @@ import {
   SpeedDial,
   SpeedDialAction,
   SpeedDialIcon,
+  CircularProgress,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -69,8 +72,12 @@ interface Application {
 interface Category {
   id: string;
   name: string;
-  applications?: Application[];
   sortOrder?: number;
+}
+
+interface CategoryWithApps extends Category {
+  applications: Application[];
+  isLoadingApps?: boolean;
 }
 
 const ListViewItem = ({
@@ -353,7 +360,7 @@ const SortableCategory = ({
   refetch,
   viewMode,
 }: {
-  category: Category;
+  category: CategoryWithApps;
   onEditClick: (id: string) => void;
   refetch: () => void;
   viewMode: string;
@@ -488,37 +495,52 @@ const SortableCategory = ({
           </Menu>
         </Box>
         <Divider sx={{ mb: 2 }} />
-        <SortableContext
-          items={category.applications?.map((app) => `app-${app.id}`) || []}
-          strategy={
-            viewMode === "grid"
-              ? rectSortingStrategy
-              : verticalListSortingStrategy
-          }
-        >
-          <Grid
-            container
-            spacing={viewMode === "grid" ? 2 : 1}
-            direction={viewMode === "grid" ? "row" : "column"}
+        {category.isLoadingApps ? (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              p: 4,
+              width: "100%",
+            }}
           >
-            {category.applications?.map((app) => (
-              <SortableApplication
-                key={app.id}
-                app={app}
-                categoryId={category.id}
-                refetch={refetch}
-                viewMode={viewMode}
-              />
-            ))}
-          </Grid>
-        </SortableContext>
+            <CircularProgress size={24} />
+          </Box>
+        ) : (
+          <SortableContext
+            items={category.applications?.map((app) => `app-${app.id}`) || []}
+            strategy={
+              viewMode === "grid"
+                ? rectSortingStrategy
+                : verticalListSortingStrategy
+            }
+          >
+            <Grid
+              container
+              spacing={viewMode === "grid" ? 2 : 1}
+              direction={viewMode === "grid" ? "row" : "column"}
+            >
+              {category.applications?.map((app) => (
+                <SortableApplication
+                  key={app.id}
+                  app={app}
+                  categoryId={category.id}
+                  refetch={refetch}
+                  viewMode={viewMode}
+                />
+              ))}
+            </Grid>
+          </SortableContext>
+        )}
       </Box>
     </Grid>
   );
 };
 
 const Dashboard = () => {
-  const [localCategories, setLocalCategories] = useState<Category[]>([]);
+  const [localCategories, setLocalCategories] = useState<CategoryWithApps[]>(
+    [],
+  );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeData, setActiveData] = useState<{
     type: "application" | "category";
@@ -537,6 +559,7 @@ const Dashboard = () => {
   }, [viewMode]);
 
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
+  const lastRefreshCountRef = useRef(0);
 
   const handleSpeedDialOpen = (
     _event: React.SyntheticEvent,
@@ -555,6 +578,9 @@ const Dashboard = () => {
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const translate = useTranslate();
+  const refresh = useRefresh();
+  const fetchingIds = useRef(new Set<string>());
+  const [refreshCount, setRefreshCount] = useState(0);
 
   const headerActions = useMemo(() => null, []);
 
@@ -563,27 +589,117 @@ const Dashboard = () => {
     isLoading,
     error,
     refetch,
-  } = useGetList<Category>("categories", {
-    pagination: { page: 1, perPage: 100 },
-    sort: { field: "sortOrder", order: "ASC" },
+  } = useQuery({
+    queryKey: ["dashboard", "categories"],
+    queryFn: () => dataProvider.findAllCategories().then((res) => res.data),
   });
+
+  const handleRefresh = useCallback(
+    (
+      appId?: string,
+      newCategoryIds?: string[],
+      categoryId?: string,
+      newName?: string,
+    ) => {
+      if (categoryId) {
+        setLocalCategories((prev) =>
+          prev.map((c) =>
+            c.id === categoryId
+              ? { ...c, name: newName || c.name, isLoadingApps: true }
+              : c,
+          ),
+        );
+      } else if (appId && newCategoryIds) {
+        setLocalCategories((prev) => {
+          const oldCategoryIds = prev
+            .filter((c) => c.applications?.some((a) => a.id === appId))
+            .map((c) => c.id);
+          const affectedIds = Array.from(
+            new Set([...oldCategoryIds, ...newCategoryIds]),
+          );
+          return prev.map((c) =>
+            affectedIds.includes(c.id) ? { ...c, isLoadingApps: true } : c,
+          );
+        });
+      } else {
+        setRefreshCount((prev) => prev + 1);
+        refresh();
+        refetch();
+      }
+    },
+    [refresh, refetch],
+  );
 
   const { searchQuery } = useHeader({
     title: translate("pages.applications"),
     actions: headerActions,
     showSearch: true,
-    onRefresh: refetch,
+    onRefresh: handleRefresh,
     viewMode: viewMode as "list" | "grid",
     onToggleViewMode: handleToggleViewMode,
   });
 
-  const [lastCategories, setLastCategories] = useState<Category[] | undefined>(
-    undefined,
+  // Load categories initially
+  useEffect(() => {
+    if (categories) {
+      const isFullRefresh = refreshCount !== lastRefreshCountRef.current;
+      lastRefreshCountRef.current = refreshCount;
+
+      setLocalCategories((prev) => {
+        return categories.map((c) => {
+          const existing = prev.find((p) => p.id === c.id);
+          if (existing && !isFullRefresh) {
+            return { ...existing, ...c };
+          }
+          return {
+            ...c,
+            applications: [],
+            isLoadingApps: true,
+          };
+        });
+      });
+    }
+  }, [categories, refreshCount]);
+
+  // Load applications for each category asynchronously
+  useEffect(() => {
+    if (localCategories.length > 0) {
+      localCategories.forEach((category) => {
+        if (category.isLoadingApps && !fetchingIds.current.has(category.id)) {
+          fetchingIds.current.add(category.id);
+          dataProvider
+            .findApplicationsByCategory(category.id)
+            .then(({ data: apps }: { data: Application[] }) => {
+              fetchingIds.current.delete(category.id);
+              setLocalCategories((prev) =>
+                prev.map((c) =>
+                  c.id === category.id
+                    ? { ...c, applications: apps, isLoadingApps: false }
+                    : c,
+                ),
+              );
+            })
+            .catch((err: any) => {
+              fetchingIds.current.delete(category.id);
+              console.error(
+                `Failed to load apps for category ${category.id}`,
+                err,
+              );
+              setLocalCategories((prev) =>
+                prev.map((c) =>
+                  c.id === category.id ? { ...c, isLoadingApps: false } : c,
+                ),
+              );
+            });
+        }
+      });
+    }
+  }, [localCategories]);
+
+  const outletContext = useMemo(
+    () => ({ refetch: handleRefresh }),
+    [handleRefresh],
   );
-  if (categories !== lastCategories) {
-    setLocalCategories(categories || []);
-    setLastCategories(categories);
-  }
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -607,7 +723,7 @@ const Dashboard = () => {
 
     const query = searchQuery.toLowerCase();
     return localCategories
-      .map((category: Category) => {
+      .map((category: CategoryWithApps) => {
         const categoryNameMatches = category.name.toLowerCase().includes(query);
         const filteredApps = category.applications?.filter(
           (app: Application) =>
@@ -625,7 +741,7 @@ const Dashboard = () => {
         }
         return null;
       })
-      .filter((category): category is Category => category !== null);
+      .filter((category): category is CategoryWithApps => category !== null);
   }, [localCategories, searchQuery]);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -682,6 +798,7 @@ const Dashboard = () => {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    const oldActiveData = activeData;
     setActiveId(null);
     setActiveData(null);
 
@@ -692,7 +809,7 @@ const Dashboard = () => {
 
     if (activeIdStr === overIdStr) return;
 
-    let updatedCategories = [...localCategories];
+    const updatedCategories = [...localCategories];
 
     if (activeIdStr.startsWith("cat-") && overIdStr.startsWith("cat-")) {
       const oldIndex = updatedCategories.findIndex(
@@ -701,24 +818,25 @@ const Dashboard = () => {
       const newIndex = updatedCategories.findIndex(
         (c) => `cat-${c.id}` === overIdStr,
       );
-      updatedCategories = arrayMove(updatedCategories, oldIndex, newIndex);
+      const moved = arrayMove(updatedCategories, oldIndex, newIndex);
 
-      updatedCategories = updatedCategories.map((cat, index) => ({
-        ...cat,
+      const reorderRequest = moved.map((cat, index) => ({
+        id: cat.id,
         sortOrder: index,
       }));
 
-      setLocalCategories(updatedCategories);
+      setLocalCategories(moved);
 
       try {
-        await dataProvider.reorderCategories({ data: updatedCategories });
-        notify("Order saved", { type: "success" });
+        await dataProvider.reorderCategories({ data: reorderRequest });
+        notify("Category order saved", { type: "success" });
       } catch {
-        notify("Failed to save order", { type: "error" });
+        notify("Failed to save category order", { type: "error" });
         refetch();
       }
     } else if (activeIdStr.startsWith("app-")) {
-      let activeCat: Category | undefined;
+      const appId = activeIdStr.replace("app-", "");
+      let activeCat: CategoryWithApps | undefined;
       let appIndex: number = -1;
 
       updatedCategories.forEach((cat) => {
@@ -734,7 +852,7 @@ const Dashboard = () => {
       if (!activeCat || !activeCat.applications) return;
 
       if (overIdStr.startsWith("app-")) {
-        let overCat: Category | undefined;
+        let overCat: CategoryWithApps | undefined;
         let overIndex: number = -1;
 
         updatedCategories.forEach((cat) => {
@@ -749,25 +867,60 @@ const Dashboard = () => {
 
         if (overCat && overCat.applications) {
           if (activeCat.id === overCat.id) {
+            // Reorder within category
             activeCat.applications = arrayMove(
               activeCat.applications,
               appIndex,
               overIndex,
             );
+            setLocalCategories([...updatedCategories]);
+            try {
+              await dataProvider.reorderApplicationsInCategory(activeCat.id, activeCat.applications.map(a => a.id));
+              notify("Application order saved", { type: "success" });
+            } catch {
+              notify("Failed to save application order", { type: "error" });
+              refetch();
+            }
           } else {
+            // Move between categories
             const [app] = activeCat.applications.splice(appIndex, 1);
             overCat.applications.splice(overIndex, 0, app);
+            setLocalCategories([...updatedCategories]);
+            try {
+              await dataProvider.moveApplication(appId, {
+                fromCategoryId: activeCat.id,
+                toCategoryId: overCat.id,
+                targetIndex: overIndex
+              });
+              notify("Application moved", { type: "success" });
+            } catch {
+              notify("Failed to move application", { type: "error" });
+              refetch();
+            }
           }
         }
-      }
-
-      setLocalCategories(updatedCategories);
-      try {
-        await dataProvider.reorderApplications({ data: updatedCategories });
-        notify("Order saved", { type: "success" });
-      } catch {
-        notify("Failed to save order", { type: "error" });
-        refetch();
+      } else if (overIdStr.startsWith("cat-")) {
+        // Drop directly on category header
+        const overCatId = overIdStr.replace("cat-", "");
+        const overCat = updatedCategories.find(c => c.id === overCatId);
+        
+        if (overCat && activeCat.id !== overCat.id) {
+          const [app] = activeCat.applications.splice(appIndex, 1);
+          if (!overCat.applications) overCat.applications = [];
+          overCat.applications.push(app);
+          setLocalCategories([...updatedCategories]);
+          try {
+            await dataProvider.moveApplication(appId, {
+              fromCategoryId: activeCat.id,
+              toCategoryId: overCat.id,
+              targetIndex: overCat.applications.length - 1
+            });
+            notify("Application moved", { type: "success" });
+          } catch {
+            notify("Failed to move application", { type: "error" });
+            refetch();
+          }
+        }
       }
     }
   };
@@ -900,7 +1053,7 @@ const Dashboard = () => {
         />
       </SpeedDial>
 
-      <Outlet context={{ refetch }} />
+      <Outlet context={outletContext} />
     </Box>
   );
 };

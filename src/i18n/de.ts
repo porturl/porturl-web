@@ -36,6 +36,7 @@ export const de = {
       name: "Benutzer |||| Benutzer",
       fields: {
         id: "ID",
+        username: "Benutzername",
         email: "E-Mail",
         avatarUrl: "Avatar",
         providerUserId: "Anbieter-Benutzer-ID",
@@ -74,6 +75,7 @@ export const de = {
     cancel: "Abbrechen",
     create_application: "Anwendung erstellen",
     create_category: "Kategorie erstellen",
+    create_user: "Benutzer erstellen",
     back: "Zurück",
     order: "Reihenfolge",
     alphabetical: "Alphabetisch",

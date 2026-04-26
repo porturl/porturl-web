@@ -1,7 +1,6 @@
 import {
-  useGetList,
   Loading,
-  Error,
+  Error as RAError,
   useDataProvider,
   useNotify,
   useDelete,
@@ -679,7 +678,7 @@ const Dashboard = () => {
                 ),
               );
             })
-            .catch((err: any) => {
+            .catch((err: Error) => {
               fetchingIds.current.delete(category.id);
               console.error(
                 `Failed to load apps for category ${category.id}`,
@@ -694,7 +693,7 @@ const Dashboard = () => {
         }
       });
     }
-  }, [localCategories]);
+  }, [localCategories, dataProvider]);
 
   const outletContext = useMemo(
     () => ({ refetch: handleRefresh }),
@@ -798,7 +797,6 @@ const Dashboard = () => {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    const oldActiveData = activeData;
     setActiveId(null);
     setActiveData(null);
 
@@ -875,7 +873,10 @@ const Dashboard = () => {
             );
             setLocalCategories([...updatedCategories]);
             try {
-              await dataProvider.reorderApplicationsInCategory(activeCat.id, activeCat.applications.map(a => a.id));
+              await dataProvider.reorderApplicationsInCategory(
+                activeCat.id,
+                activeCat.applications.map((a) => a.id),
+              );
               notify("Application order saved", { type: "success" });
             } catch {
               notify("Failed to save application order", { type: "error" });
@@ -890,7 +891,7 @@ const Dashboard = () => {
               await dataProvider.moveApplication(appId, {
                 fromCategoryId: activeCat.id,
                 toCategoryId: overCat.id,
-                targetIndex: overIndex
+                targetIndex: overIndex,
               });
               notify("Application moved", { type: "success" });
             } catch {
@@ -902,8 +903,8 @@ const Dashboard = () => {
       } else if (overIdStr.startsWith("cat-")) {
         // Drop directly on category header
         const overCatId = overIdStr.replace("cat-", "");
-        const overCat = updatedCategories.find(c => c.id === overCatId);
-        
+        const overCat = updatedCategories.find((c) => c.id === overCatId);
+
         if (overCat && activeCat.id !== overCat.id) {
           const [app] = activeCat.applications.splice(appIndex, 1);
           if (!overCat.applications) overCat.applications = [];
@@ -913,7 +914,7 @@ const Dashboard = () => {
             await dataProvider.moveApplication(appId, {
               fromCategoryId: activeCat.id,
               toCategoryId: overCat.id,
-              targetIndex: overCat.applications.length - 1
+              targetIndex: overCat.applications.length - 1,
             });
             notify("Application moved", { type: "success" });
           } catch {
@@ -926,7 +927,7 @@ const Dashboard = () => {
   };
 
   if (isLoading) return <Loading />;
-  if (error) return <Error error={error} />;
+  if (error) return <RAError error={error} />;
   if (!categories) return null;
 
   return (

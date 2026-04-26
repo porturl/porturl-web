@@ -6,7 +6,6 @@ import {
   SimpleForm,
   TextInput,
   Create,
-  ReferenceArrayInput,
   AutocompleteArrayInput,
   UrlField,
   required,
@@ -63,7 +62,7 @@ interface Application {
   clientId?: string;
   realm?: string;
   availableRoles?: string[];
-  categories?: { id: string; name?: string }[];
+  categories?: Category[];
 }
 
 const ApplicationTitle = () => {
@@ -496,7 +495,9 @@ const MyToolbar = ({ onCancel }: { onCancel: () => void }) => {
 };
 
 const categoriesFormat = (value: (string | { id: string })[]) =>
-  Array.isArray(value) ? value.map((v) => (typeof v === "object" ? v.id : v)) : [];
+  Array.isArray(value)
+    ? value.map((v) => (typeof v === "object" ? v.id : v))
+    : [];
 
 const categoriesParse = (value: string[]) =>
   Array.isArray(value) ? value.map((v) => ({ id: v })) : [];
@@ -522,15 +523,14 @@ export const ApplicationEdit = () => {
   const translate = useTranslate();
   const dataProvider = useDataProvider();
   const { id } = useParams();
-  const { refetch } =
-    useOutletContext<{
-      refetch: (
-        appId?: string,
-        categoryIds?: string[],
-        categoryId?: string,
-        newName?: string,
-      ) => void;
-    }>();
+  const { refetch } = useOutletContext<{
+    refetch: (
+      appId?: string,
+      categoryIds?: string[],
+      categoryId?: string,
+      newName?: string,
+    ) => void;
+  }>();
 
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
@@ -542,8 +542,8 @@ export const ApplicationEdit = () => {
   }, [navigate]);
 
   const handleSuccess = useCallback(
-    (data: any) => {
-      const newCategoryIds = data.categories?.map((c: any) => c.id) || [];
+    (data: Application) => {
+      const newCategoryIds = data.categories?.map((c: Category) => c.id) || [];
       refetch(data.id, newCategoryIds);
       handleClose();
     },
@@ -617,15 +617,14 @@ export const ApplicationCreate = () => {
   const navigate = useNavigate();
   const translate = useTranslate();
   const dataProvider = useDataProvider();
-  const { refetch } =
-    useOutletContext<{
-      refetch: (
-        appId?: string,
-        categoryIds?: string[],
-        categoryId?: string,
-        newName?: string,
-      ) => void;
-    }>();
+  const { refetch } = useOutletContext<{
+    refetch: (
+      appId?: string,
+      categoryIds?: string[],
+      categoryId?: string,
+      newName?: string,
+    ) => void;
+  }>();
 
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
@@ -637,8 +636,8 @@ export const ApplicationCreate = () => {
   }, [navigate]);
 
   const handleSuccess = useCallback(
-    (data: any) => {
-      const newCategoryIds = data.categories?.map((c: any) => c.id) || [];
+    (data: Application) => {
+      const newCategoryIds = data.categories?.map((c: Category) => c.id) || [];
       refetch(data.id, newCategoryIds);
       handleClose();
     },

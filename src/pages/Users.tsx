@@ -14,16 +14,15 @@ import {
   Button as RAButton,
   SimpleList,
   useTranslate,
-  CreateButton,
   DeleteButton,
+  DeleteButtonProps,
   useGetIdentity,
 } from "react-admin";
-import { Avatar, useMediaQuery, Theme, Box, IconButton, Fab } from "@mui/material";
+import { Avatar, useMediaQuery, Theme, Box, Fab } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import { useNavigate, useParams } from "react-router-dom";
 import { useHeader } from "../components/HeaderContext";
-import { useMemo } from "react";
 
 interface User {
   id: string;
@@ -72,7 +71,7 @@ const AvatarField = ({ source }: { source: string }) => {
   );
 };
 
-const DeleteUserButton = (props: any) => {
+const DeleteUserButton = (props: DeleteButtonProps<User>) => {
   const record = useRecordContext<User>();
   const { data: identity } = useGetIdentity();
 

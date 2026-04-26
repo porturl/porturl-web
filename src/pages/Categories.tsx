@@ -243,22 +243,21 @@ export const CategoryEdit = () => {
   const navigate = useNavigate();
   const translate = useTranslate();
   const { id } = useParams();
-  const { refetch } =
-    useOutletContext<{
-      refetch: (
-        appId?: string,
-        categoryIds?: string[],
-        categoryId?: string,
-        newName?: string,
-      ) => void;
-    }>();
+  const { refetch } = useOutletContext<{
+    refetch: (
+      appId?: string,
+      categoryIds?: string[],
+      categoryId?: string,
+      newName?: string,
+    ) => void;
+  }>();
 
   const handleClose = useCallback(() => {
     navigate("/");
   }, [navigate]);
 
   const handleSuccess = useCallback(
-    (data: any) => {
+    (data: Category) => {
       refetch(undefined, undefined, data.id, data.name);
       handleClose();
     },
@@ -326,15 +325,14 @@ export const CategoryEdit = () => {
 export const CategoryCreate = () => {
   const navigate = useNavigate();
   const translate = useTranslate();
-  const { refetch } =
-    useOutletContext<{
-      refetch: (
-        appId?: string,
-        categoryIds?: string[],
-        categoryId?: string,
-        newName?: string,
-      ) => void;
-    }>();
+  const { refetch } = useOutletContext<{
+    refetch: (
+      appId?: string,
+      categoryIds?: string[],
+      categoryId?: string,
+      newName?: string,
+    ) => void;
+  }>();
 
   const handleClose = useCallback(() => {
     navigate("/");

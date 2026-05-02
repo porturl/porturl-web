@@ -21,7 +21,7 @@
     "@mui/icons-material": "^9.0.0",
     "@mui/material": "^9.0.0",
     "oidc-client-ts": "^3.4.1",
-    "ra-data-simple-rest": "^5.14.3",
+    "ra-data-simple-rest": "^5.14.6",
     "ra-i18n-polyglot": "^5.14.4",
     "ra-language-english": "^5.14.4",
     "ra-language-german": "^3.13.5",
